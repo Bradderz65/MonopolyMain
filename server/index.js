@@ -137,15 +137,39 @@ app.get('/api/debug/give-property/:gameId/:playerName/:propertyIndex', (req, res
 io.on('connection', (socket) => {
   console.log(`Player connected: ${socket.id}`);
 
-  socket.on('createGame', ({ playerName, gameName, maxPlayers, isPrivate, auctionsEnabled }) => {
+  // Get available tokens and colors for character selection
+  socket.on('getCharacterOptions', ({ gameId }) => {
+    const { Game } = require('./game');
+    if (gameId) {
+      const game = gameManager.getGame(gameId);
+      if (game) {
+        socket.emit('characterOptions', {
+          tokens: game.getAvailableTokens(),
+          colors: game.getAvailableColors(),
+          allTokens: Game.getAllTokens(),
+          allColors: Game.getAllColors()
+        });
+        return;
+      }
+    }
+    // No game yet - return all options
+    socket.emit('characterOptions', {
+      tokens: Game.getAllTokens(),
+      colors: Game.getAllColors(),
+      allTokens: Game.getAllTokens(),
+      allColors: Game.getAllColors()
+    });
+  });
+
+  socket.on('createGame', ({ playerName, gameName, maxPlayers, isPrivate, auctionsEnabled, tokenId, colorId }) => {
     const game = gameManager.createGame(gameName, maxPlayers, isPrivate, auctionsEnabled || false);
-    const player = game.addPlayer(socket.id, playerName);
+    const player = game.addPlayer(socket.id, playerName, tokenId, colorId);
     socket.join(game.id);
     socket.emit('gameCreated', { gameId: game.id, player, game: game.getState() });
     io.emit('gamesUpdated', gameManager.getPublicGames());
   });
 
-  socket.on('joinGame', ({ gameId, playerName, isBot }) => {
+  socket.on('joinGame', ({ gameId, playerName, isBot, botDifficulty, tokenId, colorId }) => {
     const game = gameManager.getGame(gameId);
     if (!game) {
       socket.emit('error', { message: 'Game not found' });
@@ -159,8 +183,12 @@ io.on('connection', (socket) => {
       socket.emit('error', { message: 'Game is full' });
       return;
     }
-    const player = game.addPlayer(socket.id, playerName);
-    if (isBot) player.isBot = true;
+    // Bots automatically get assigned available token/color (pass null)
+    const player = game.addPlayer(socket.id, playerName, isBot ? null : tokenId, isBot ? null : colorId);
+    if (isBot) {
+      player.isBot = true;
+      player.botDifficulty = botDifficulty || 'hard';
+    }
     socket.join(game.id);
     socket.emit('gameJoined', { gameId: game.id, player, game: game.getState() });
     socket.to(game.id).emit('playerJoined', { player, game: game.getState() });
@@ -244,7 +272,7 @@ io.on('connection', (socket) => {
     io.emit('gamesUpdated', gameManager.getPublicGames());
   });
 
-  socket.on('addBot', ({ gameId }) => {
+  socket.on('addBot', ({ gameId, difficulty }) => {
     const game = gameManager.getGame(gameId);
     if (!game) {
       socket.emit('error', { message: 'Game not found' });
@@ -259,9 +287,14 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Spawn a bot in a separate process
+    // Validate difficulty level
+    const validDifficulties = ['easy', 'medium', 'hard'];
+    const botDifficulty = validDifficulties.includes(difficulty) ? difficulty : 'hard';
+    console.log(`Adding bot with difficulty: ${botDifficulty}`);
+
+    // Spawn a bot with specified difficulty
     const MonopolyBot = require('./bot');
-    const bot = new MonopolyBot('http://localhost:3001', gameId);
+    const bot = new MonopolyBot('http://localhost:3001', gameId, null, botDifficulty);
     bot.connect().then(() => {
       bot.joinGame();
     }).catch(err => {

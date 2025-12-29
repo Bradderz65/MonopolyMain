@@ -1,0 +1,32 @@
+{
+  "timestamp": "2025-12-29T04:42:37.269Z",
+  "suites": [
+    {
+      "name": "Bot AI Decision Tests",
+      "passed": 86,
+      "failed": 0,
+      "total": 86,
+      "duration": 102
+    },
+    {
+      "name": "Complete Game Mechanics Tests",
+      "passed": 157,
+      "failed": 0,
+      "skipped": 1,
+      "duration": 5084
+    },
+    {
+      "name": "Game Suite Tests",
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0,
+      "duration": 4
+    }
+  ],
+  "summary": {
+    "totalPassed": 260,
+    "totalFailed": 0,
+    "totalSkipped": 1,
+    "duration": 5210
+  }
+}

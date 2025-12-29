@@ -1,5 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
-const Game = require('./game');
+const { Game } = require('./game');
 const fs = require('fs');
 const path = require('path');
 
@@ -65,9 +65,9 @@ class GameManager {
           // Mark all players as disconnected initially
           game.players.forEach(p => {
             p.disconnected = true;
-            // Track bots to respawn
+            // Track bots to respawn with their difficulty
             if (p.isBot) {
-              botsToRespawn.push({ gameId: game.id, botName: p.name });
+              botsToRespawn.push({ gameId: game.id, botName: p.name, botDifficulty: p.botDifficulty || 'hard' });
             }
           });
           this.games.set(game.id, game);
@@ -78,9 +78,9 @@ class GameManager {
         if (botsToRespawn.length > 0) {
           setTimeout(() => {
             const MonopolyBot = require('./bot');
-            botsToRespawn.forEach(({ gameId, botName }) => {
-              console.log(`Respawning bot ${botName} for game ${gameId}`);
-              const bot = new MonopolyBot('http://localhost:3001', gameId, botName);
+            botsToRespawn.forEach(({ gameId, botName, botDifficulty }) => {
+              console.log(`Respawning bot ${botName} for game ${gameId} (difficulty: ${botDifficulty})`);
+              const bot = new MonopolyBot('http://localhost:3001', gameId, botName, botDifficulty);
               bot.connect().then(() => {
                 bot.rejoinGame();
               }).catch(err => {

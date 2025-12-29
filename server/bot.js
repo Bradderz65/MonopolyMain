@@ -7,17 +7,131 @@
  * - Smart property valuation based on game context
  * - Strategic building decisions
  * - Adaptive play style based on game phase
+ * - Three difficulty levels: easy, medium, hard
  */
 
 const io = require('socket.io-client');
 
-const BOT_NAMES = ['RoboTycoon', 'MonopolyMaster', 'PropertyKing', 'LandBaron', 'RealEstateBot', 'WealthBot'];
+const BOT_NAMES = {
+    easy: ['NoviceBot', 'BeginnerAI', 'CasualPlayer', 'FriendlyBot', 'LearnBot', 'NewbieAI'],
+    medium: ['TacticalBot', 'StrategistAI', 'CleverPlayer', 'SmartBot', 'ChallengerAI', 'AdeptBot'],
+    hard: ['RoboTycoon', 'MonopolyMaster', 'PropertyKing', 'LandBaron', 'RealEstateBot', 'WealthBot']
+};
+
+// Difficulty presets - affects all strategic decisions
+const DIFFICULTY_CONFIGS = {
+    easy: {
+        // Property buying - less strategic, buys almost everything
+        buyPropertyThreshold: 0.10,      // Buy properties more readily
+        minCashReserve: 50,              // Keep less cash reserve
+        blockOpponentBonus: 0,           // Doesn't recognize blocking opportunities
+        monopolyCompletionBonus: 0.2,    // Small bonus for completing monopoly
+
+        // Building - less optimal
+        buildWhenCashAbove: 200,
+        maxBuildingSpend: 0.8,           // Spends more, leaves less reserve
+
+        // Auctions - overbids or underbids randomly
+        auctionAggressiveness: 0.5,      // Less aggressive in auctions
+        auctionRandomness: 0.3,          // 30% random variance
+
+        // Trading - accepts bad trades, doesn't negotiate well
+        tradeAcceptThreshold: 0.8,       // Accepts trades at 0.8x value
+        tradeCashMultiplier: 1.2,        // Only needs 1.2x for cash trades
+        blockingPropertyMultiplier: 1.5, // Sells blocking properties too cheap
+        monopolyGiveawayMultiplier: 2.0, // Gives away monopoly-completing too cheap
+        proposesTradesFrequency: 0.3,    // Rarely proposes trades
+
+        // Jail - suboptimal decisions
+        jailPayThreshold: 100,           // Pays fine even when poor
+        jailStayLateGame: false,         // Doesn't use late-game jail strategy
+
+        // Strategic awareness
+        recognizesBlocking: false,       // Doesn't see blocking opportunities
+        recognizesMonopolyValue: false,  // Doesn't prioritize monopoly completion
+        colorGroupAwareness: 0.3,        // Low color group value awareness
+    },
+    medium: {
+        // Property buying - some strategy
+        buyPropertyThreshold: 0.20,
+        minCashReserve: 75,
+        blockOpponentBonus: 0.25,        // Some blocking awareness
+        monopolyCompletionBonus: 0.4,
+
+        // Building
+        buildWhenCashAbove: 250,
+        maxBuildingSpend: 0.7,
+
+        // Auctions
+        auctionAggressiveness: 0.70,
+        auctionRandomness: 0.15,
+
+        // Trading - moderate negotiation
+        tradeAcceptThreshold: 1.0,
+        tradeCashMultiplier: 1.3,
+        blockingPropertyMultiplier: 2.0,
+        monopolyGiveawayMultiplier: 2.5,
+        proposesTradesFrequency: 0.6,
+
+        // Jail
+        jailPayThreshold: 150,
+        jailStayLateGame: true,
+
+        // Strategic awareness
+        recognizesBlocking: true,
+        recognizesMonopolyValue: true,
+        colorGroupAwareness: 0.6,
+    },
+    hard: {
+        // Property buying - optimal strategy
+        buyPropertyThreshold: 0.25,
+        minCashReserve: 100,
+        blockOpponentBonus: 0.5,
+        monopolyCompletionBonus: 0.7,
+
+        // Building
+        buildWhenCashAbove: 300,
+        maxBuildingSpend: 0.6,
+
+        // Auctions
+        auctionAggressiveness: 0.85,
+        auctionRandomness: 0,
+
+        // Trading - expert negotiation
+        tradeAcceptThreshold: 1.0,
+        tradeCashMultiplier: 1.5,
+        blockingPropertyMultiplier: 2.5,
+        monopolyGiveawayMultiplier: 3.0,
+        proposesTradesFrequency: 1.0,
+
+        // Jail
+        jailPayThreshold: 200,
+        jailStayLateGame: true,
+
+        // Strategic awareness
+        recognizesBlocking: true,
+        recognizesMonopolyValue: true,
+        colorGroupAwareness: 1.0,
+    }
+};
 
 class MonopolyBot {
-    constructor(serverUrl, gameId, botName = null) {
+    /**
+     * Create a new Monopoly Bot
+     * @param {string} serverUrl - WebSocket server URL
+     * @param {string} gameId - Game ID to join
+     * @param {string} botName - Optional custom bot name
+     * @param {string} difficulty - 'easy', 'medium', or 'hard' (default: 'hard')
+     */
+    constructor(serverUrl, gameId, botName = null, difficulty = 'hard') {
         this.serverUrl = serverUrl;
         this.gameId = gameId;
-        this.botName = botName || BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
+        this.difficulty = ['easy', 'medium', 'hard'].includes(difficulty) ? difficulty : 'hard';
+        
+        // Get appropriate name for difficulty
+        const namePool = BOT_NAMES[this.difficulty] || BOT_NAMES.hard;
+        this.botName = botName || namePool[Math.floor(Math.random() * namePool.length)];
+        
         this.socket = null;
         this.gameState = null;
         this.myPlayer = null;
@@ -25,44 +139,105 @@ class MonopolyBot {
         this.actionInProgress = false;
         this.turnCheckTimer = null;
         this.lastActionTime = Date.now();
-        this.tradeAttempts = new Map(); // Track trade attempts to avoid spam
+        this.tradeAttempts = new Map();
         this.lastTradeTime = 0;
-        this.declinedTrades = new Map(); // Track trades declined by players - key: "playerId-propIndex", value: { count, lastPrice, timestamp }
-        this.receivedTradeHistory = new Map(); // Track trades we've received and declined - key: "fromId-tradeHash", value: { count, timestamp }
+        this.declinedTrades = new Map();
+        this.receivedTradeHistory = new Map();
 
-        // Strategy settings - adaptive based on game phase
+        // Load difficulty-specific configuration
+        const difficultyConfig = DIFFICULTY_CONFIGS[this.difficulty];
+        
+        // Strategy settings - merge difficulty config with base config
         this.config = {
             // Property buying
-            buyPropertyThreshold: 0.25,
-            minCashReserve: 100,
+            buyPropertyThreshold: difficultyConfig.buyPropertyThreshold,
+            minCashReserve: difficultyConfig.minCashReserve,
+            blockOpponentBonus: difficultyConfig.blockOpponentBonus,
+            monopolyCompletionBonus: difficultyConfig.monopolyCompletionBonus,
 
             // Building
-            buildWhenCashAbove: 300,
-            maxBuildingSpend: 0.6, // Don't spend more than 60% of cash on buildings
+            buildWhenCashAbove: difficultyConfig.buildWhenCashAbove,
+            maxBuildingSpend: difficultyConfig.maxBuildingSpend,
 
             // Auctions
-            auctionAggressiveness: 0.85,
+            auctionAggressiveness: difficultyConfig.auctionAggressiveness,
+            auctionRandomness: difficultyConfig.auctionRandomness,
 
             // Trading
-            tradeCheckInterval: 15000, // Check for trades every 15 seconds
-            minTradeValue: 50, // Minimum value difference to consider trade
+            tradeCheckInterval: 15000,
+            minTradeValue: 50,
+            tradeAcceptThreshold: difficultyConfig.tradeAcceptThreshold,
+            tradeCashMultiplier: difficultyConfig.tradeCashMultiplier,
+            blockingPropertyMultiplier: difficultyConfig.blockingPropertyMultiplier,
+            monopolyGiveawayMultiplier: difficultyConfig.monopolyGiveawayMultiplier,
+            proposesTradesFrequency: difficultyConfig.proposesTradesFrequency,
+
+            // Jail
+            jailPayThreshold: difficultyConfig.jailPayThreshold,
+            jailStayLateGame: difficultyConfig.jailStayLateGame,
+
+            // Strategic awareness
+            recognizesBlocking: difficultyConfig.recognizesBlocking,
+            recognizesMonopolyValue: difficultyConfig.recognizesMonopolyValue,
+            colorGroupAwareness: difficultyConfig.colorGroupAwareness,
 
             // Timing
             actionDelay: 1500,
             turnCheckInterval: 3000,
+
+            // Humanized delay ranges
+            delays: {
+                rollDice: { min: 1000, max: 3000 },
+                buyProperty: { min: 2000, max: 5000 },
+                declineProperty: { min: 1500, max: 3500 },
+                auctionBid: { min: 1000, max: 3000 },
+                auctionPass: { min: 800, max: 2000 },
+                tradeDecision: { min: 2000, max: 5000 },
+                proposeTrade: { min: 1500, max: 4000 },
+                buildHouse: { min: 300, max: 800 },
+                jailDecision: { min: 1500, max: 4000 },
+                endTurn: { min: 800, max: 2000 },
+                postLanding: { min: 2500, max: 5000 },
+                sellAsset: { min: 500, max: 1500 },
+            },
         };
 
         // Color group values (higher = more valuable for monopoly)
-        this.colorGroupRanking = {
-            'orange': 10,    // Best ROI, high traffic
-            'red': 9,        // High traffic
-            'yellow': 8,     // Good value
-            'light-blue': 7, // Cheap to build, good early
-            'pink': 6,       // Decent
-            'green': 5,      // Expensive but good rent
-            'dark-blue': 4,  // Very expensive, fewer properties
-            'brown': 3,      // Cheap but low rent
+        // Adjusted by colorGroupAwareness for easier difficulties
+        const baseRanking = {
+            'orange': 10,
+            'red': 9,
+            'yellow': 8,
+            'light-blue': 7,
+            'pink': 6,
+            'green': 5,
+            'dark-blue': 4,
+            'brown': 3,
         };
+        
+        // For easy bots, flatten the ranking differences
+        this.colorGroupRanking = {};
+        for (const [color, value] of Object.entries(baseRanking)) {
+            const awareness = this.config.colorGroupAwareness;
+            // Blend toward average (6.5) based on awareness
+            this.colorGroupRanking[color] = 6.5 + (value - 6.5) * awareness;
+        }
+        
+        console.log(`[BOT ${this.botName}] Created with difficulty: ${this.difficulty.toUpperCase()}`);
+    }
+
+    /**
+     * Get a random delay within the configured range for an action type
+     * @param {string} actionType - The type of action (e.g., 'rollDice', 'buyProperty')
+     * @returns {number} Random delay in milliseconds
+     */
+    getRandomDelay(actionType) {
+        const delayConfig = this.config.delays[actionType];
+        if (!delayConfig) {
+            // Fallback to a reasonable default if action type not found
+            return 1000 + Math.random() * 2000;
+        }
+        return delayConfig.min + Math.random() * (delayConfig.max - delayConfig.min);
     }
 
     connect() {
@@ -117,7 +292,9 @@ class MonopolyBot {
         this.socket.on('landingResult', ({ result, game }) => {
             this.updateGameState(game);
             if (this.isMyTurn) {
-                setTimeout(() => this.handlePostLanding(), 3500);
+                const delay = this.getRandomDelay('postLanding');
+                console.log(`[BOT ${this.botName}] Thinking about next move... (${Math.round(delay / 1000)}s)`);
+                setTimeout(() => this.handlePostLanding(), delay);
             }
         });
 
@@ -137,15 +314,17 @@ class MonopolyBot {
 
         this.socket.on('auctionStarted', ({ auction, game }) => {
             this.updateGameState(game);
-            setTimeout(() => this.handleAuction(auction), 1000);
+            const delay = this.getRandomDelay('auctionBid');
+            setTimeout(() => this.handleAuction(auction), delay);
         });
 
         this.socket.on('auctionUpdate', ({ auction, game }) => {
             this.updateGameState(game);
             if (auction) {
-                setTimeout(() => this.handleAuction(auction), 1000);
+                const delay = this.getRandomDelay('auctionBid');
+                setTimeout(() => this.handleAuction(auction), delay);
             } else if (this.isMyTurn) {
-                this.scheduleEndTurn(500);
+                this.scheduleEndTurn(this.getRandomDelay('endTurn'));
             }
         });
 
@@ -157,12 +336,14 @@ class MonopolyBot {
 
         this.socket.on('jailFinePaid', ({ game }) => {
             this.updateGameState(game);
-            setTimeout(() => this.rollDice(), 500);
+            const delay = this.getRandomDelay('rollDice');
+            setTimeout(() => this.rollDice(), delay);
         });
 
         this.socket.on('jailCardUsed', ({ game }) => {
             this.updateGameState(game);
-            setTimeout(() => this.rollDice(), 500);
+            const delay = this.getRandomDelay('rollDice');
+            setTimeout(() => this.rollDice(), delay);
         });
 
         this.socket.on('tradeProposed', ({ trade, game }) => {
@@ -193,7 +374,8 @@ class MonopolyBot {
             this.updateGameState(game);
             if (this.gameState.pendingAction?.type === 'mustRaiseFunds' ||
                 this.gameState.pendingAction?.type === 'mustPayOrBankrupt') {
-                setTimeout(() => this.handleBankruptcyState(this.gameState.pendingAction), 500);
+                const delay = this.getRandomDelay('sellAsset');
+                setTimeout(() => this.handleBankruptcyState(this.gameState.pendingAction), delay);
             }
         });
 
@@ -201,9 +383,10 @@ class MonopolyBot {
             this.updateGameState(game);
             if (this.gameState.pendingAction?.type === 'mustRaiseFunds' ||
                 this.gameState.pendingAction?.type === 'mustPayOrBankrupt') {
-                setTimeout(() => this.handleBankruptcyState(this.gameState.pendingAction), 500);
+                const delay = this.getRandomDelay('sellAsset');
+                setTimeout(() => this.handleBankruptcyState(this.gameState.pendingAction), delay);
             } else if (this.isMyTurn && !this.gameState.pendingAction) {
-                this.scheduleEndTurn(500);
+                this.scheduleEndTurn(this.getRandomDelay('endTurn'));
             }
         });
 
@@ -285,6 +468,22 @@ class MonopolyBot {
     }
 
     /**
+     * Get the board space for a property reference (handles both index and object)
+     * @param {number|Object} propData - Property index or object with index property
+     * @returns {Object|null} The board space or null
+     */
+    getPropertyFromData(propData) {
+        if (propData === null || propData === undefined) return null;
+        if (typeof propData === 'number') {
+            return this.gameState.board[propData] || null;
+        }
+        if (typeof propData === 'object' && propData.index !== undefined) {
+            return this.gameState.board[propData.index] || propData;
+        }
+        return propData;
+    }
+
+    /**
      * Analyze what each player has and needs
      */
     analyzePlayerStrategies() {
@@ -298,7 +497,7 @@ class MonopolyBot {
 
             // Count properties by color
             for (const propData of player.properties) {
-                const prop = typeof propData === 'number' ? this.gameState.board[propData] : propData;
+                const prop = this.getPropertyFromData(propData);
                 if (!prop) continue;
 
                 if (prop.color) {
@@ -336,7 +535,7 @@ class MonopolyBot {
         let wealth = player.money;
 
         for (const propData of player.properties) {
-            const prop = typeof propData === 'number' ? this.gameState.board[propData] : propData;
+            const prop = this.getPropertyFromData(propData);
             if (!prop) continue;
 
             wealth += prop.mortgaged ? 0 : (prop.mortgage || prop.price / 2);
@@ -379,7 +578,7 @@ class MonopolyBot {
         const blocking = [];
 
         for (const propData of this.myPlayer.properties) {
-            const prop = typeof propData === 'number' ? this.gameState.board[propData] : propData;
+            const prop = this.getPropertyFromData(propData);
             if (!prop || !prop.color) continue;
 
             const colorGroup = this.gameState.board.filter(s => s.color === prop.color);
@@ -438,14 +637,18 @@ class MonopolyBot {
 
             if (timeSinceLastDecline < cooldownTime && tradeHistory.count >= 2) {
                 console.log(`[BOT ${this.botName}] Auto-declining - already declined similar trade ${tradeHistory.count} times`);
+                const delay = this.getRandomDelay('tradeDecision');
                 setTimeout(() => {
                     this.socket.emit('declineTrade', { gameId: this.gameId, tradeId: trade.id });
-                }, 1000);
+                }, delay);
                 return;
             }
         }
 
         const evaluation = this.evaluateTradeAdvanced(trade);
+
+        const tradeDelay = this.getRandomDelay('tradeDecision');
+        console.log(`[BOT ${this.botName}] Considering trade offer... (${Math.round(tradeDelay / 1000)}s)`);
 
         setTimeout(() => {
             if (evaluation.shouldAccept) {
@@ -465,20 +668,23 @@ class MonopolyBot {
                     lastOffer: trade.offer?.money || 0
                 });
             }
-        }, 2000 + Math.random() * 2000);
+        }, tradeDelay);
     }
 
     /**
      * Advanced trade evaluation considering strategic value
-     * Bot acts like a smart player - won't accept bad deals even for high money
+     * Bot acts like a smart player - won't accept bad deals, but will accept great deals
      */
     evaluateTradeAdvanced(trade) {
         let receivingValue = trade.offer?.money || 0;
         let givingValue = trade.request?.money || 0;
         let strategicBonus = 0;
-        let strategicPenalty = 0;
         let isBlockingProperty = false;
         let wouldGiveMonopoly = false;
+
+        // Calculate total property values we're giving up
+        let totalRequestedPropertyValue = 0;
+        const requestedProps = trade.request?.properties || [];
 
         // Value properties we'd receive
         for (const propIndex of (trade.offer?.properties || [])) {
@@ -494,79 +700,111 @@ class MonopolyBot {
         }
 
         // Value properties we'd give up
-        for (const propIndex of (trade.request?.properties || [])) {
+        for (const propIndex of requestedProps) {
             const property = this.gameState.board[propIndex];
             const baseValue = this.calculatePropertyValueAdvanced(property, 'giving');
             givingValue += baseValue;
+            totalRequestedPropertyValue += property?.price || 0;
 
-            // Penalty if this gives opponent a monopoly
+            // Check if this gives opponent a monopoly
             const blocked = this.wouldGiveOpponentMonopoly(property);
             if (blocked) {
                 wouldGiveMonopoly = true;
-                // Much higher penalty - never want to give monopolies easily
-                strategicPenalty += property.price * 2.0;
                 console.log(`[BOT ${this.botName}] Trade would give ${blocked.name} a monopoly!`);
             }
 
-            // Extra penalty if we're blocking someone's monopoly
+            // Check if we're blocking someone's monopoly
             const blocking = this.findBlockingProperties().find(b =>
                 b.property.index === propIndex
             );
             if (blocking) {
                 isBlockingProperty = true;
-                // Blocking properties are VERY valuable - don't trade easily
-                strategicPenalty += property.price * 1.5;
                 console.log(`[BOT ${this.botName}] This property blocks ${blocking.blockedPlayer.name}'s monopoly!`);
             }
         }
 
-        // Jail cards
-        receivingValue += (trade.offer?.jailCards || 0) * 50;
+        // Jail cards valued at £50 each
+        const jailCardValue = (trade.offer?.jailCards || 0) * 50;
+        receivingValue += jailCardValue;
         givingValue += (trade.request?.jailCards || 0) * 50;
 
         const adjustedReceiving = receivingValue + strategicBonus;
-        const adjustedGiving = givingValue + strategicPenalty;
 
-        // Calculate ratio - require better deal for strategic properties
-        let requiredRatio = 1.0;
-        if (wouldGiveMonopoly) {
-            requiredRatio = 1.8; // Need 80% better deal to give away monopoly-completing property
+        // Calculate cash ratio for cash-heavy offers (include jail card value as cash equivalent)
+        const cashOffer = (trade.offer?.money || 0) + jailCardValue;
+        const cashRatio = totalRequestedPropertyValue > 0 ? cashOffer / totalRequestedPropertyValue : 0;
+        const cashOnlyOffer = (trade.offer?.properties || []).length === 0 && cashOffer > 0;
+
+        // FAST PATH: Accept extremely generous cash offers regardless of strategy
+        // If someone offers 4x+ the value, just take it
+        if (cashOnlyOffer && cashRatio >= 4.0) {
+            console.log(`[BOT ${this.botName}] Accepting massive overpay: ${cashRatio.toFixed(1)}x value`);
+            return {
+                shouldAccept: true,
+                ratio: cashRatio,
+                reason: 'massive overpay accepted',
+                receivingValue: adjustedReceiving,
+                givingValue
+            };
+        }
+
+        // Calculate required cash multiplier based on strategic importance and difficulty
+        const baseCashMultiplier = this.config.tradeCashMultiplier;
+        const blockingMultiplier = this.config.blockingPropertyMultiplier;
+        const monopolyMultiplier = this.config.monopolyGiveawayMultiplier;
+        
+        let requiredCashMultiplier = baseCashMultiplier;
+        if (wouldGiveMonopoly && isBlockingProperty) {
+            requiredCashMultiplier = monopolyMultiplier + (blockingMultiplier - baseCashMultiplier);
+        } else if (wouldGiveMonopoly) {
+            requiredCashMultiplier = monopolyMultiplier;
         } else if (isBlockingProperty) {
-            requiredRatio = 1.5; // Need 50% better deal for blocking property
+            requiredCashMultiplier = blockingMultiplier;
+        }
+
+        // For cash-only trades, use the cash ratio comparison
+        if (cashOnlyOffer && requestedProps.length > 0) {
+            const shouldAccept = cashRatio >= requiredCashMultiplier;
+
+            if (!shouldAccept) {
+                console.log(`[BOT ${this.botName}] Cash offer too low: £${cashOffer} for £${totalRequestedPropertyValue} (${cashRatio.toFixed(2)}x, need ${requiredCashMultiplier}x)`);
+            }
+
+            let reason = 'standard cash evaluation';
+            if (wouldGiveMonopoly) reason = 'gives opponent monopoly - high premium required';
+            else if (isBlockingProperty) reason = 'blocking property - premium required';
+
+            return {
+                shouldAccept,
+                ratio: cashRatio,
+                reason,
+                receivingValue: adjustedReceiving,
+                givingValue
+            };
+        }
+
+        // For property swaps or mixed trades, use value-based ratio
+        // Apply strategic penalties to giving value for ratio calculation (scaled by difficulty)
+        let adjustedGiving = givingValue;
+        
+        // Penalties only apply if bot recognizes blocking/monopoly value
+        if (this.config.recognizesMonopolyValue && wouldGiveMonopoly) {
+            adjustedGiving += totalRequestedPropertyValue * 1.5 * this.config.colorGroupAwareness;
+        } else if (this.config.recognizesBlocking && isBlockingProperty) {
+            adjustedGiving += totalRequestedPropertyValue * 1.0 * this.config.colorGroupAwareness;
         }
 
         const ratio = adjustedReceiving / Math.max(adjustedGiving, 1);
 
-        // Additional check: if they're only offering money for a strategic property, 
-        // apply extra scrutiny (players often try to lowball bots)
-        let shouldAccept = ratio >= requiredRatio;
-
-        if (shouldAccept && (trade.request?.properties || []).length > 0) {
-            // Check if offer is mainly cash for properties
-            const cashOnlyOffer = (trade.offer?.properties || []).length === 0;
-            const requestedProps = trade.request?.properties || [];
-
-            if (cashOnlyOffer && requestedProps.length > 0) {
-                // Someone is offering only money for our properties
-                // Be more conservative - require significantly more
-                const totalRequestedValue = requestedProps.reduce((sum, idx) => {
-                    const prop = this.gameState.board[idx];
-                    return sum + (prop?.price || 0);
-                }, 0);
-
-                const cashOffer = trade.offer?.money || 0;
-                const cashRatio = cashOffer / totalRequestedValue;
-
-                // For cash-only trades, require at least 1.5x property value
-                // For blocking properties, require 2.5x+ 
-                const minCashMultiplier = isBlockingProperty ? 2.5 : (wouldGiveMonopoly ? 3.0 : 1.5);
-
-                if (cashRatio < minCashMultiplier) {
-                    shouldAccept = false;
-                    console.log(`[BOT ${this.botName}] Cash offer too low: £${cashOffer} for £${totalRequestedValue} worth of properties (need ${minCashMultiplier}x)`);
-                }
-            }
+        // Required ratio varies by difficulty (easy bots accept worse trades)
+        let requiredRatio = this.config.tradeAcceptThreshold;
+        if (this.config.recognizesMonopolyValue && wouldGiveMonopoly) {
+            requiredRatio *= 1.2; // Need 20% better deal
+        } else if (this.config.recognizesBlocking && isBlockingProperty) {
+            requiredRatio *= 1.1; // Need 10% better deal
         }
+
+        const shouldAccept = ratio >= requiredRatio;
 
         let reason = 'standard evaluation';
         if (strategicBonus > 0) reason = 'completes monopoly';
@@ -658,6 +896,11 @@ class MonopolyBot {
     considerProposingTrade() {
         if (!this.isMyTurn || !this.gameState) return;
         if (Date.now() - this.lastTradeTime < this.config.tradeCheckInterval) return;
+        
+        // Check if bot should propose trades based on difficulty
+        if (Math.random() > this.config.proposesTradesFrequency) {
+            return; // Skip proposing trades this turn
+        }
 
         const colorAnalysis = this.analyzeColorGroups();
         const playerAnalysis = this.analyzePlayerStrategies();
@@ -693,7 +936,8 @@ class MonopolyBot {
                 }
 
                 // Find something to offer them
-                const offer = this.findTradeOffer(owner, neededProp);
+                const attemptCount = lastAttempt?.declineCount || 0;
+                const offer = this.findTradeOffer(owner, neededProp, attemptCount);
                 if (offer) {
                     console.log(`[BOT ${this.botName}] Proposing trade to ${owner.name} for ${neededProp.name}`);
 
@@ -705,12 +949,17 @@ class MonopolyBot {
                     });
                     this.lastTradeTime = Date.now();
 
-                    this.socket.emit('proposeTrade', {
-                        gameId: this.gameId,
-                        targetPlayerId: owner.id,
-                        offer: offer.offer,
-                        request: { properties: [neededProp.index] }
-                    });
+                    // Add delay before proposing trade
+                    const proposeDelay = this.getRandomDelay('proposeTrade');
+                    console.log(`[BOT ${this.botName}] Preparing trade offer... (${Math.round(proposeDelay / 1000)}s)`);
+                    setTimeout(() => {
+                        this.socket.emit('proposeTrade', {
+                            gameId: this.gameId,
+                            targetPlayerId: owner.id,
+                            offer: offer.offer,
+                            request: { properties: [neededProp.index] }
+                        });
+                    }, proposeDelay);
                     return;
                 }
             }
@@ -720,19 +969,44 @@ class MonopolyBot {
     /**
      * Find a fair trade offer for a property we want
      */
-    findTradeOffer(targetPlayer, wantedProperty) {
-        const wantedValue = this.calculatePropertyValueAdvanced(wantedProperty, 'receiving');
+    /**
+     * Find a fair trade offer for a property we want
+     * @param {Object} targetPlayer - The player to trade with
+     * @param {Object} wantedProperty - The property we want
+     * @param {number} attemptCount - How many times we've tried and failed (0-based)
+     */
+    findTradeOffer(targetPlayer, wantedProperty, attemptCount = 0) {
+        let wantedValue = this.calculatePropertyValueAdvanced(wantedProperty, 'receiving');
+
+        // Negotiation Strategy:
+        // Attempt 0: 0.9x - 1.0x (Testing waters / lowball)
+        // Attempt 1: 1.1x - 1.2x (Serious offer)
+        // Attempt 2: 1.25x - 1.35x (Premium)
+        // Attempt 3+: 1.4x - 1.6x+ (Desperate / "I need this")
+        let negotiationMultiplier = 0.9 + (attemptCount * 0.2);
+
+        // Cap reasonable limits
+        negotiationMultiplier = Math.min(negotiationMultiplier, 2.0);
+
+        // Always offer at least a little premium for monopoly completion
+        if (this.wouldCompleteMyMonopoly(wantedProperty)) {
+            negotiationMultiplier = Math.max(negotiationMultiplier, 1.2 + (attemptCount * 0.15));
+        }
+
+        const effectiveWantedValue = Math.floor(wantedValue * negotiationMultiplier);
 
         // Try money offer first if we're rich
-        if (this.myPlayer.money > wantedValue * 1.5 + this.config.minCashReserve) {
-            // Offer 20-40% premium for monopoly-completing properties
-            const premium = this.wouldCompleteMyMonopoly(wantedProperty) ? 1.4 : 1.2;
-            const moneyOffer = Math.floor(wantedValue * premium);
+        // We require less reserves if it's a lowball offer, more if we are desperate
+        const reserveMultiplier = attemptCount > 1 ? 1.0 : 1.5;
+
+        if (this.myPlayer.money > effectiveWantedValue * reserveMultiplier + this.config.minCashReserve) {
+            const moneyOffer = effectiveWantedValue;
 
             if (moneyOffer <= this.myPlayer.money - this.config.minCashReserve) {
+                console.log(`[BOT ${this.botName}] Negotiation (attempt ${attemptCount}): Offering £${moneyOffer} for ${wantedProperty.name} (Value: £${wantedValue} x ${negotiationMultiplier.toFixed(2)})`);
                 return {
                     offer: { money: moneyOffer },
-                    expectedAcceptance: 0.6,
+                    expectedAcceptance: 0.5 + (attemptCount * 0.1),
                 };
             }
         }
@@ -744,7 +1018,7 @@ class MonopolyBot {
 
         // Find properties that would help them toward a monopoly
         for (const propData of this.myPlayer.properties) {
-            const prop = typeof propData === 'number' ? this.gameState.board[propData] : propData;
+            const prop = this.getPropertyFromData(propData);
             if (!prop || !prop.color) continue;
 
             // Don't trade away monopoly pieces
@@ -758,21 +1032,26 @@ class MonopolyBot {
                 // They're one away from monopoly in this color!
                 const propValue = this.calculatePropertyValueAdvanced(prop, 'giving');
 
-                // Add money to balance if needed
-                const diff = wantedValue - propValue;
+                // Calculate difference based on negotiation multiplier
+                const diff = effectiveWantedValue - propValue;
                 let moneyComponent = 0;
 
                 if (diff > 0 && diff <= this.myPlayer.money - this.config.minCashReserve) {
                     moneyComponent = Math.floor(diff);
                 }
 
-                if (propValue + moneyComponent >= wantedValue * 0.9) {
+                const totalOfferValue = propValue + moneyComponent;
+
+                // If we are desperate (high attempt count), we accept a "worse" deal for us
+                // i.e., we offering more value than perceived market value
+                if (totalOfferValue >= effectiveWantedValue * 0.95) {
+                    console.log(`[BOT ${this.botName}] Negotiation (attempt ${attemptCount}): Swap offer for ${wantedProperty.name} (My: ${prop.name} + £${moneyComponent})`);
                     return {
                         offer: {
                             properties: [prop.index || this.gameState.board.indexOf(prop)],
                             money: moneyComponent > 0 ? moneyComponent : undefined,
                         },
-                        expectedAcceptance: 0.4,
+                        expectedAcceptance: 0.4 + (attemptCount * 0.1),
                     };
                 }
             }
@@ -792,9 +1071,10 @@ class MonopolyBot {
 
         if (price > money) return false;
 
-        // Adjust cash reserve based on game phase
-        const reserveNeeded = gamePhase === 'early' ? 50 :
-            gamePhase === 'mid' ? 100 : 150;
+        // Adjust cash reserve based on game phase and difficulty
+        const baseReserve = this.config.minCashReserve;
+        const reserveNeeded = gamePhase === 'early' ? baseReserve * 0.5 :
+            gamePhase === 'mid' ? baseReserve : baseReserve * 1.5;
 
         if (money - price < reserveNeeded) {
             // Exception: always buy if it completes our monopoly
@@ -818,24 +1098,26 @@ class MonopolyBot {
             score -= 0.1; // Be more selective late game
         }
 
-        // Monopoly completion - highest priority
-        if (this.wouldCompleteMyMonopoly(property)) {
-            score += 0.7;
+        // Monopoly completion - priority based on difficulty
+        if (this.config.recognizesMonopolyValue && this.wouldCompleteMyMonopoly(property)) {
+            score += this.config.monopolyCompletionBonus;
             console.log(`[BOT ${this.botName}] ${property.name} would complete monopoly!`);
         } else {
-            // Progress toward monopoly
+            // Progress toward monopoly (reduced for easy bots)
             const progress = this.getColorGroupProgress(property);
-            score += progress * 0.3;
+            score += progress * 0.3 * this.config.colorGroupAwareness;
         }
 
-        // Block opponent monopoly - very important
-        const blocked = this.wouldCompleteOpponentMonopoly(property);
-        if (blocked) {
-            score += 0.5;
-            console.log(`[BOT ${this.botName}] ${property.name} blocks ${blocked.name}'s monopoly!`);
+        // Block opponent monopoly - importance based on difficulty
+        if (this.config.recognizesBlocking) {
+            const blocked = this.wouldCompleteOpponentMonopoly(property);
+            if (blocked) {
+                score += this.config.blockOpponentBonus;
+                console.log(`[BOT ${this.botName}] ${property.name} blocks ${blocked.name}'s monopoly!`);
+            }
         }
 
-        // Color group value
+        // Color group value (already adjusted by colorGroupAwareness in constructor)
         const colorRank = this.colorGroupRanking[property.color];
         if (colorRank) {
             score += colorRank * 0.02;
@@ -860,7 +1142,7 @@ class MonopolyBot {
             score += 0.1;
         }
 
-        console.log(`[BOT ${this.botName}] ${property.name} score: ${score.toFixed(2)} (phase: ${gamePhase})`);
+        console.log(`[BOT ${this.botName}] ${property.name} score: ${score.toFixed(2)} (phase: ${gamePhase}, difficulty: ${this.difficulty})`);
 
         return score >= this.config.buyPropertyThreshold;
     }
@@ -886,7 +1168,6 @@ class MonopolyBot {
         let spentSoFar = 0;
         let housesBuilt = 0;
         const maxHousesPerTurn = 10; // Limit to prevent excessive building
-        const buildDelay = 150; // Delay between each build request (ms)
 
         // Collect all the houses we want to build
         const buildQueue = [];
@@ -954,6 +1235,7 @@ class MonopolyBot {
             console.log(`[BOT ${this.botName}] Planning to build ${buildQueue.length} houses, total cost: £${spentSoFar}`);
 
             buildQueue.forEach((build, index) => {
+                const buildDelay = this.getRandomDelay('buildHouse');
                 setTimeout(() => {
                     console.log(`[BOT ${this.botName}] Building on ${build.propertyName} (${build.currentHouses} -> ${build.currentHouses + 1})`);
                     this.socket.emit('buildHouse', { gameId: this.gameId, propertyIndex: build.propIndex });
@@ -983,6 +1265,44 @@ class MonopolyBot {
     // AUCTION HANDLING
     // ═══════════════════════════════════════════════════════════════════════
 
+    /**
+     * Calculate the maximum bid we are willing to place
+     * @param {Object} property - The property up for auction
+     * @returns {number} The maximum bid amount
+     */
+    calculateAuctionLimit(property) {
+        if (!property) return 0;
+
+        let maxBid = property.price * this.config.auctionAggressiveness;
+        
+        // Add randomness for easier difficulties (makes bidding less optimal)
+        if (this.config.auctionRandomness > 0) {
+            const variance = (Math.random() - 0.5) * 2 * this.config.auctionRandomness;
+            maxBid *= (1 + variance);
+        }
+
+        // Much higher for monopoly completion (only if bot recognizes monopoly value)
+        if (this.config.recognizesMonopolyValue && this.wouldCompleteMyMonopoly(property)) {
+            maxBid = property.price * (1.3 + this.config.colorGroupAwareness * 0.5);
+        }
+
+        // Higher to block opponent monopoly (only if bot recognizes blocking)
+        if (this.config.recognizesBlocking) {
+            const blocked = this.wouldCompleteOpponentMonopoly(property);
+            if (blocked) {
+                maxBid = Math.max(maxBid, property.price * (1.0 + this.config.blockOpponentBonus * 0.6));
+            }
+        }
+
+        // Railroad synergy
+        if (property.type === 'railroad' && this.getRailroadCount() >= 2) {
+            maxBid = Math.max(maxBid, property.price * 1.2);
+        }
+
+        const canAfford = this.myPlayer.money - this.config.minCashReserve;
+        return Math.floor(Math.min(maxBid, canAfford));
+    }
+
     handleAuction(auction) {
         if (!auction || !this.myPlayer) return;
         if (auction.passedPlayers?.includes(this.myPlayer.id)) return;
@@ -991,29 +1311,15 @@ class MonopolyBot {
         const currentBid = auction.currentBid || 0;
         const minBid = Math.max(auction.minimumBid || 10, currentBid + 1);
 
-        // Calculate max we'd pay with strategic considerations
-        let maxBid = property.price * this.config.auctionAggressiveness;
+        // Calculate max bid using isolated logic (easier to test)
+        const maxBid = this.calculateAuctionLimit(property);
 
-        // Much higher for monopoly completion
+        // Log reasoning for debugging/human-feel
         if (this.wouldCompleteMyMonopoly(property)) {
-            maxBid = property.price * 1.8;
             console.log(`[BOT ${this.botName}] Bidding aggressively - completes monopoly`);
+        } else if (this.wouldCompleteOpponentMonopoly(property)) {
+            console.log(`[BOT ${this.botName}] Bidding to block opponent`);
         }
-
-        // Higher to block opponent monopoly
-        const blocked = this.wouldCompleteOpponentMonopoly(property);
-        if (blocked) {
-            maxBid = Math.max(maxBid, property.price * 1.3);
-            console.log(`[BOT ${this.botName}] Bidding to block ${blocked.name}`);
-        }
-
-        // Railroad synergy
-        if (property.type === 'railroad' && this.getRailroadCount() >= 2) {
-            maxBid = property.price * 1.2;
-        }
-
-        const canAfford = this.myPlayer.money - this.config.minCashReserve;
-        maxBid = Math.min(maxBid, canAfford);
 
         if (minBid <= maxBid) {
             // Strategic bid increment
@@ -1023,16 +1329,18 @@ class MonopolyBot {
             const increment = Math.floor(Math.random() * 15) + 5;
             bidAmount = Math.min(minBid + increment, maxBid);
 
-            console.log(`[BOT ${this.botName}] Bidding £${bidAmount} on ${property.name} (max: £${Math.floor(maxBid)})`);
+            const bidDelay = this.getRandomDelay('auctionBid');
+            console.log(`[BOT ${this.botName}] Bidding £${bidAmount} on ${property.name} (max: £${maxBid}) in ${Math.round(bidDelay / 1000)}s...`);
 
             setTimeout(() => {
                 this.socket.emit('auctionBid', { gameId: this.gameId, amount: bidAmount });
-            }, 1000 + Math.random() * 1500);
+            }, bidDelay);
         } else {
-            console.log(`[BOT ${this.botName}] Passing on ${property.name} (min: £${minBid}, max: £${Math.floor(maxBid)})`);
+            const passDelay = this.getRandomDelay('auctionPass');
+            console.log(`[BOT ${this.botName}] Passing on ${property.name} (min: £${minBid}, max: £${maxBid})`);
             setTimeout(() => {
                 this.socket.emit('auctionPass', { gameId: this.gameId });
-            }, 500);
+            }, passDelay);
         }
     }
 
@@ -1061,20 +1369,22 @@ class MonopolyBot {
     }
 
     joinGame() {
-        console.log(`[BOT ${this.botName}] Joining game ${this.gameId}...`);
+        console.log(`[BOT ${this.botName}] Joining game ${this.gameId} (${this.difficulty.toUpperCase()})...`);
         this.socket.emit('joinGame', {
             gameId: this.gameId,
             playerName: this.botName,
-            isBot: true
+            isBot: true,
+            botDifficulty: this.difficulty
         });
     }
 
     rejoinGame() {
-        console.log(`[BOT ${this.botName}] Rejoining game ${this.gameId}...`);
+        console.log(`[BOT ${this.botName}] Rejoining game ${this.gameId} (${this.difficulty.toUpperCase()})...`);
         this.socket.emit('rejoinGame', {
             gameId: this.gameId,
             playerName: this.botName,
-            isBot: true
+            isBot: true,
+            botDifficulty: this.difficulty
         });
     }
 
@@ -1102,23 +1412,28 @@ class MonopolyBot {
 
         // Check for pending action first
         if (this.gameState.pendingAction) {
-            setTimeout(() => this.handlePendingAction(), this.config.actionDelay);
+            const delay = this.getRandomDelay('buyProperty'); // Use buyProperty delay for pending actions
+            setTimeout(() => this.handlePendingAction(), delay);
             return;
         }
 
         // Check if in jail
         if (this.myPlayer.inJail) {
-            setTimeout(() => this.handleJail(), this.config.actionDelay);
+            const delay = this.getRandomDelay('jailDecision');
+            console.log(`[BOT ${this.botName}] Thinking about jail options... (${Math.round(delay / 1000)}s)`);
+            setTimeout(() => this.handleJail(), delay);
             return;
         }
 
         // Roll dice if we haven't or can roll again
         if (!this.gameState.diceRolled || this.gameState.canRollAgain) {
-            this.rollDice();
+            const delay = this.getRandomDelay('rollDice');
+            console.log(`[BOT ${this.botName}] Getting ready to roll... (${Math.round(delay / 1000)}s)`);
+            setTimeout(() => this.rollDice(), delay);
             return;
         }
 
-        this.scheduleEndTurn(500);
+        this.scheduleEndTurn(this.getRandomDelay('endTurn'));
     }
 
     rollDice() {
@@ -1132,7 +1447,7 @@ class MonopolyBot {
         if (!this.isMyTurn) return;
 
         const gamePhase = this.getGamePhase();
-        console.log(`[BOT ${this.botName}] In jail (turn ${this.myPlayer.jailTurns}/3, phase: ${gamePhase})`);
+        console.log(`[BOT ${this.botName}] In jail (turn ${this.myPlayer.jailTurns}/3, phase: ${gamePhase}, difficulty: ${this.difficulty})`);
 
         // Use jail card if we have one
         if (this.myPlayer.getOutOfJailCards > 0) {
@@ -1141,15 +1456,15 @@ class MonopolyBot {
             return;
         }
 
-        // Late game: stay in jail longer to avoid rent
-        if (gamePhase === 'late' && this.myPlayer.jailTurns < 2) {
+        // Late game strategy - only smart bots stay in jail to avoid rent
+        if (this.config.jailStayLateGame && gamePhase === 'late' && this.myPlayer.jailTurns < 2) {
             console.log(`[BOT ${this.botName}] Staying in jail (late game strategy)`);
             this.socket.emit('rollDice', { gameId: this.gameId });
             return;
         }
 
-        // Pay fine if we have money and it's early/mid game
-        if (this.myPlayer.money > 200 && this.myPlayer.jailTurns < 2) {
+        // Pay fine if we have money - threshold varies by difficulty
+        if (this.myPlayer.money > this.config.jailPayThreshold && this.myPlayer.jailTurns < 2) {
             console.log(`[BOT ${this.botName}] Paying jail fine`);
             this.socket.emit('payJailFine', { gameId: this.gameId });
             return;
@@ -1169,13 +1484,17 @@ class MonopolyBot {
         if (this.gameState.pendingAction) {
             this.handlePendingAction();
         } else if (this.gameState.canRollAgain && !this.myPlayer.inJail) {
-            setTimeout(() => this.rollDice(), 1000);
+            const delay = this.getRandomDelay('rollDice');
+            console.log(`[BOT ${this.botName}] Rolling again... (${Math.round(delay / 1000)}s)`);
+            setTimeout(() => this.rollDice(), delay);
         } else {
-            this.scheduleEndTurn(1000);
+            this.scheduleEndTurn(this.getRandomDelay('endTurn'));
         }
     }
 
-    scheduleEndTurn(delay = 500) {
+    scheduleEndTurn(delay = null) {
+        // Use provided delay or generate a random one
+        const actualDelay = delay !== null ? delay : this.getRandomDelay('endTurn');
         setTimeout(() => {
             if (!this.isMyTurn) {
                 this.actionInProgress = false;
@@ -1213,14 +1532,14 @@ class MonopolyBot {
             this.lastActionTime = Date.now();
             this.socket.emit('endTurn', { gameId: this.gameId });
             this.actionInProgress = false;
-        }, delay);
+        }, actualDelay);
     }
 
     handlePendingAction() {
         const action = this.gameState.pendingAction;
         if (!action) {
             this.actionInProgress = false;
-            this.scheduleEndTurn(500);
+            this.scheduleEndTurn(this.getRandomDelay('endTurn'));
             return;
         }
 
@@ -1242,21 +1561,26 @@ class MonopolyBot {
 
     decideBuyProperty(property) {
         const shouldBuy = this.evaluateProperty(property);
+        const delay = shouldBuy ? this.getRandomDelay('buyProperty') : this.getRandomDelay('declineProperty');
 
-        if (shouldBuy) {
-            console.log(`[BOT ${this.botName}] Buying ${property.name} for £${property.price}`);
-            this.socket.emit('buyProperty', { gameId: this.gameId });
-        } else {
-            console.log(`[BOT ${this.botName}] Declining ${property.name}`);
-            this.socket.emit('declineProperty', { gameId: this.gameId });
-        }
+        console.log(`[BOT ${this.botName}] Evaluating ${property.name}... (${Math.round(delay / 1000)}s)`);
+
+        setTimeout(() => {
+            if (shouldBuy) {
+                console.log(`[BOT ${this.botName}] Buying ${property.name} for £${property.price}`);
+                this.socket.emit('buyProperty', { gameId: this.gameId });
+            } else {
+                console.log(`[BOT ${this.botName}] Declining ${property.name}`);
+                this.socket.emit('declineProperty', { gameId: this.gameId });
+            }
+        }, delay);
     }
 
     handleBankruptcyState(action) {
         console.log(`[BOT ${this.botName}] Bankruptcy state - Money: £${this.myPlayer.money}`);
 
         if (this.myPlayer.money >= 0) {
-            this.scheduleEndTurn(500);
+            this.scheduleEndTurn(this.getRandomDelay('endTurn'));
             return;
         }
 

@@ -1,0 +1,89 @@
+
+╔════════════════════════════════════════════════════════════════╗
+║           BOT DIFFICULTY BEHAVIOR ANALYSIS                     ║
+║       Comparing Easy vs Medium vs Hard Strategies              ║
+╚════════════════════════════════════════════════════════════════╝
+
+
+🔵 TESTING DIFFICULTY: EASY
+────────────────────────────────────────────────────────────────
+[BOT RealEstateBot] Applying EASY mode settings
+
+  ⚙️  Configuration Check:
+     Aggressiveness: 0.5
+     Min Cash Reserve: £400
+     Buy Threshold: 0.15
+     Min Roll Delay: 2000ms
+
+  🏠 Buying Behavior:
+     Scenario (Money £300, Price £200): ❌ PASS (Hits Reserve £400)
+
+  🔨 Advanced Auction Behavior:
+     [Standard] Value £60  → Limit: £30 (50%)
+     [Expensive] Value £350 → Limit: £175 (50%)
+     [Completes Monopoly] Value £200 → Limit: £100 (50%)
+     [Blocks Opponent] Value £200    → Limit: £100 (50%)
+     [Poor & Desperate] Money £250   → Limit: £-150 (Reserve: £400)
+
+  🏗️  Building Behavior:
+     Scenario (Money £500, Threshold £600): ❌ WAIT
+
+  🤝 Trade Evaluation Behavior:
+     [Fair Swap] Value Match → undefined (Ratio: 1.00)
+     [Scam: Give £500]       → undefined (Ratio: 0.00)
+     [Buy for £100 (Val £60)]   → undefined (Ratio: 2.20)
+
+🔵 TESTING DIFFICULTY: MEDIUM
+────────────────────────────────────────────────────────────────
+
+  ⚙️  Configuration Check:
+     Aggressiveness: 0.85
+     Min Cash Reserve: £100
+     Buy Threshold: 0.25
+     Min Roll Delay: 1000ms
+
+  🏠 Buying Behavior:
+     Scenario (Money £300, Price £200): ✅ BUY (Above Reserve £100)
+
+  🔨 Advanced Auction Behavior:
+     [Standard] Value £60  → Limit: £51 (85%)
+     [Expensive] Value £350 → Limit: £297 (85%)
+     [Completes Monopoly] Value £200 → Limit: £170 (85%)
+     [Blocks Opponent] Value £200    → Limit: £170 (85%)
+     [Poor & Desperate] Money £250   → Limit: £150 (Reserve: £100)
+
+  🏗️  Building Behavior:
+     Scenario (Money £500, Threshold £300): ✅ BUILD
+
+  🤝 Trade Evaluation Behavior:
+     [Fair Swap] Value Match → undefined (Ratio: 1.00)
+     [Scam: Give £500]       → undefined (Ratio: 0.00)
+     [Buy for £100 (Val £60)]   → undefined (Ratio: 2.20)
+
+🔵 TESTING DIFFICULTY: HARD
+────────────────────────────────────────────────────────────────
+[BOT RoboTycoon] Applying HARD mode settings
+
+  ⚙️  Configuration Check:
+     Aggressiveness: 1.2
+     Min Cash Reserve: £50
+     Buy Threshold: 0.8
+     Min Roll Delay: 600ms
+
+  🏠 Buying Behavior:
+     Scenario (Money £300, Price £200): ✅ BUY (Above Reserve £50)
+
+  🔨 Advanced Auction Behavior:
+     [Standard] Value £60  → Limit: £72 (120%)
+     [Expensive] Value £350 → Limit: £420 (120%)
+     [Completes Monopoly] Value £200 → Limit: £240 (120%)
+     [Blocks Opponent] Value £200    → Limit: £240 (120%)
+     [Poor & Desperate] Money £250   → Limit: £200 (Reserve: £50)
+
+  🏗️  Building Behavior:
+     Scenario (Money £500, Threshold £150): ✅ BUILD
+
+  🤝 Trade Evaluation Behavior:
+     [Fair Swap] Value Match → undefined (Ratio: 1.00)
+     [Scam: Give £500]       → undefined (Ratio: 0.00)
+     [Buy for £100 (Val £60)]   → undefined (Ratio: 2.20)

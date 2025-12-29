@@ -58,6 +58,7 @@ function GameBoard({
   // Default to 'players' tab to show full player details
   const [activeTab, setActiveTab] = useState('players');
   const [selectedProperty, setSelectedProperty] = useState(null);
+  const [botDifficulty, setBotDifficulty] = useState('hard');
   const [propertyPopupDismissed, setPropertyPopupDismissed] = useState(false);
   const [followMode, setFollowMode] = useState(false);
   const [logTabVisible, setLogTabVisible] = useState(false);
@@ -279,13 +280,41 @@ function GameBoard({
                 >
                   Start Game
                 </button>
-                <button
-                  className="btn btn-secondary"
-                  onClick={addBot}
-                  disabled={gameState.players.length >= (gameState.maxPlayers || 4)}
-                >
-                  🤖 Add Bot
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <select
+                    value={botDifficulty}
+                    onChange={(e) => setBotDifficulty(e.target.value)}
+                    style={{ 
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      color: 'white',
+                      fontWeight: '600',
+                      fontSize: '1rem',
+                      cursor: 'pointer',
+                      outline: 'none',
+                      appearance: 'none',
+                      WebkitAppearance: 'none',
+                      paddingRight: '30px',
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 8L1 3h10z'/%3E%3C/svg%3E")`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 10px center'
+                    }}
+                    disabled={gameState.players.length >= (gameState.maxPlayers || 4)}
+                  >
+                    <option value="easy" style={{ background: '#1a1a2e', color: 'white' }}>🟢 Easy</option>
+                    <option value="medium" style={{ background: '#1a1a2e', color: 'white' }}>🟡 Medium</option>
+                    <option value="hard" style={{ background: '#1a1a2e', color: 'white' }}>🔴 Hard</option>
+                  </select>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => addBot(botDifficulty)}
+                    disabled={gameState.players.length >= (gameState.maxPlayers || 4)}
+                  >
+                    🤖 Add Bot
+                  </button>
+                </div>
               </>
             )}
             <button className="btn btn-danger" onClick={leaveGame}>
