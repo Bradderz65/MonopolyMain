@@ -1,0 +1,74 @@
+
+╔════════════════════════════════════════════════════════════════╗
+║           BOT DIFFICULTY BEHAVIOR ANALYSIS                     ║
+║       Comparing Easy vs Medium vs Hard Strategies              ║
+╚════════════════════════════════════════════════════════════════╝
+
+
+🔵 TESTING DIFFICULTY: EASY
+────────────────────────────────────────────────────────────────
+[BOT RealEstateBot] Applying EASY mode settings
+
+  ⚙️  Configuration Check:
+     Aggressiveness: 0.5
+     Min Cash Reserve: £400
+     Buy Threshold: 0.15
+     Min Roll Delay: 2000ms
+
+  🏠 Buying Behavior:
+     Scenario (Money £300, Price £200): ❌ PASS (Hits Reserve £400)
+
+  🔨 Auction Behavior:
+     Property Value £240. Bot Limit: £120
+     (% of Value: 50%)
+
+  🏗️  Building Behavior:
+     Scenario (Money £500, Threshold £600): ❌ WAIT
+
+  🤝 Trade Behavior (Negotiation):
+     Trade Check Interval: 15s
+
+🔵 TESTING DIFFICULTY: MEDIUM
+────────────────────────────────────────────────────────────────
+
+  ⚙️  Configuration Check:
+     Aggressiveness: 0.85
+     Min Cash Reserve: £100
+     Buy Threshold: 0.25
+     Min Roll Delay: 1000ms
+
+  🏠 Buying Behavior:
+     Scenario (Money £300, Price £200): ✅ BUY (Above Reserve £100)
+
+  🔨 Auction Behavior:
+     Property Value £240. Bot Limit: £204
+     (% of Value: 85%)
+
+  🏗️  Building Behavior:
+     Scenario (Money £500, Threshold £300): ✅ BUILD
+
+  🤝 Trade Behavior (Negotiation):
+     Trade Check Interval: 15s
+
+🔵 TESTING DIFFICULTY: HARD
+────────────────────────────────────────────────────────────────
+[BOT LandBaron] Applying HARD mode settings
+
+  ⚙️  Configuration Check:
+     Aggressiveness: 1.2
+     Min Cash Reserve: £50
+     Buy Threshold: 0.8
+     Min Roll Delay: 600ms
+
+  🏠 Buying Behavior:
+     Scenario (Money £300, Price £200): ✅ BUY (Above Reserve £50)
+
+  🔨 Auction Behavior:
+     Property Value £240. Bot Limit: £288
+     (% of Value: 120%)
+
+  🏗️  Building Behavior:
+     Scenario (Money £500, Threshold £150): ✅ BUILD
+
+  🤝 Trade Behavior (Negotiation):
+     Trade Check Interval: 15s

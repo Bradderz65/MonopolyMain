@@ -172,13 +172,13 @@ function App() {
 
     newSocket.on('diceRolled', ({ result, game }) => {
       sounds.diceRoll();
-      
+
       const movingPlayer = game.players[game.currentPlayerIndex];
       const newPosition = movingPlayer.position;
-      
+
       // Check if player is in jail and didn't escape (no movement should happen)
       const playerStillInJail = movingPlayer.inJail;
-      
+
       if (playerStillInJail) {
         // Player failed to roll doubles in jail - no animation needed, just show dice
         console.log('[CLIENT] Player still in jail, no movement animation');
@@ -191,7 +191,7 @@ function App() {
         setTimeout(() => sounds.diceResult(), 500);
         return;
       }
-      
+
       isAnimating = true;
       pendingLandingResult = null;
       const startPos = (newPosition - result.total + 40) % 40;
@@ -377,22 +377,26 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const createGame = useCallback((gameName, maxPlayers, isPrivate, auctionsEnabled) => {
+  const createGame = useCallback((gameName, maxPlayers, isPrivate, auctionsEnabled, tokenId, colorId) => {
     if (!socket || !playerName.trim()) return;
     socket.emit('createGame', {
       playerName: playerName.trim(),
       gameName,
       maxPlayers,
       isPrivate,
-      auctionsEnabled
+      auctionsEnabled,
+      tokenId,
+      colorId
     });
   }, [socket, playerName]);
 
-  const joinGame = useCallback((gameId) => {
+  const joinGame = useCallback((gameId, tokenId, colorId) => {
     if (!socket || !playerName.trim()) return;
     socket.emit('joinGame', {
       gameId,
-      playerName: playerName.trim()
+      playerName: playerName.trim(),
+      tokenId,
+      colorId
     });
   }, [socket, playerName]);
 
@@ -410,9 +414,9 @@ function App() {
     clearSession();
   }, [socket, currentGame]);
 
-  const addBot = useCallback(() => {
+  const addBot = useCallback((difficulty = 'hard') => {
     if (!socket || !currentGame) return;
-    socket.emit('addBot', { gameId: currentGame });
+    socket.emit('addBot', { gameId: currentGame, difficulty });
   }, [socket, currentGame]);
 
   const rollDice = useCallback(() => {
@@ -530,6 +534,7 @@ function App() {
           createGame={createGame}
           joinGame={joinGame}
           onReset={resetAllGames}
+          socket={socket}
         />
       ) : (
         <GameBoard

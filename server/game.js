@@ -1,8 +1,29 @@
 const { v4: uuidv4 } = require('uuid');
 const { BOARD_SPACES, CHANCE_CARDS, COMMUNITY_CHEST_CARDS } = require('./boardData');
 
-const PLAYER_COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e'];
-const PLAYER_TOKENS = ['🚗', '🎩', '👟', '🚢', '🐕', '🔔', '🛒', '💎'];
+// Available player colors with names
+const PLAYER_COLORS = [
+  { id: 'red', hex: '#e74c3c', name: 'Red' },
+  { id: 'blue', hex: '#3498db', name: 'Blue' },
+  { id: 'green', hex: '#2ecc71', name: 'Green' },
+  { id: 'yellow', hex: '#f1c40f', name: 'Yellow' },
+  { id: 'purple', hex: '#9b59b6', name: 'Purple' },
+  { id: 'teal', hex: '#1abc9c', name: 'Teal' },
+  { id: 'orange', hex: '#e67e22', name: 'Orange' },
+  { id: 'pink', hex: '#ff6b9d', name: 'Pink' }
+];
+
+// Available player tokens with names
+const PLAYER_TOKENS = [
+  { id: 'car', emoji: '🚗', name: 'Car' },
+  { id: 'hat', emoji: '🎩', name: 'Top Hat' },
+  { id: 'shoe', emoji: '👟', name: 'Shoe' },
+  { id: 'ship', emoji: '🚢', name: 'Ship' },
+  { id: 'dog', emoji: '🐕', name: 'Dog' },
+  { id: 'cat', emoji: '🐈', name: 'Cat' },
+  { id: 'thimble', emoji: '🧵', name: 'Thimble' },
+  { id: 'diamond', emoji: '💎', name: 'Diamond' }
+];
 
 class Game {
   constructor(id, name, maxPlayers = 4, isPrivate = false, auctionsEnabled = false) {
@@ -41,8 +62,30 @@ class Game {
     return array;
   }
 
-  addPlayer(socketId, name) {
+  addPlayer(socketId, name, tokenId = null, colorId = null) {
     if (this.players.length >= this.maxPlayers) return null;
+
+    // Get used tokens and colors
+    const usedTokens = this.players.map(p => p.tokenId);
+    const usedColors = this.players.map(p => p.colorId);
+
+    // Find available token (use specified or first available)
+    let selectedToken;
+    if (tokenId && !usedTokens.includes(tokenId)) {
+      selectedToken = PLAYER_TOKENS.find(t => t.id === tokenId);
+    }
+    if (!selectedToken) {
+      selectedToken = PLAYER_TOKENS.find(t => !usedTokens.includes(t.id)) || PLAYER_TOKENS[0];
+    }
+
+    // Find available color (use specified or first available)
+    let selectedColor;
+    if (colorId && !usedColors.includes(colorId)) {
+      selectedColor = PLAYER_COLORS.find(c => c.id === colorId);
+    }
+    if (!selectedColor) {
+      selectedColor = PLAYER_COLORS.find(c => !usedColors.includes(c.id)) || PLAYER_COLORS[0];
+    }
 
     const player = {
       id: socketId,
@@ -56,14 +99,39 @@ class Game {
       bankrupt: false,
       disconnected: false,
       isBot: false,
-      color: PLAYER_COLORS[this.players.length],
-      token: PLAYER_TOKENS[this.players.length],
+      color: selectedColor.hex,
+      colorId: selectedColor.id,
+      colorName: selectedColor.name,
+      token: selectedToken.emoji,
+      tokenId: selectedToken.id,
+      tokenName: selectedToken.name,
       isHost: this.players.length === 0
     };
 
     this.players.push(player);
-    this.addLog(`${name} joined the game`);
+    this.addLog(`${name} joined the game as ${selectedToken.emoji}`);
     return player;
+  }
+
+  // Get available tokens not in use
+  getAvailableTokens() {
+    const usedTokens = this.players.map(p => p.tokenId);
+    return PLAYER_TOKENS.filter(t => !usedTokens.includes(t.id));
+  }
+
+  // Get available colors not in use
+  getAvailableColors() {
+    const usedColors = this.players.map(p => p.colorId);
+    return PLAYER_COLORS.filter(c => !usedColors.includes(c.id));
+  }
+
+  // Static getters for all options
+  static getAllTokens() {
+    return PLAYER_TOKENS;
+  }
+
+  static getAllColors() {
+    return PLAYER_COLORS;
   }
 
   removePlayer(socketId, forceRemove = false) {
@@ -715,7 +783,7 @@ class Game {
     property.mortgaged = true;
     player.money += property.mortgage;
 
-    this.addLog(`${player.name} mortgaged ${property.name} for $${property.mortgage}`);
+    this.addLog(`${player.name} mortgaged ${property.name} for £${property.mortgage}`);
     this.checkBankruptcy(player);
     return { success: true, property: property };
   }
@@ -738,7 +806,7 @@ class Game {
     property.mortgaged = false;
     player.money -= cost;
 
-    this.addLog(`${player.name} unmortgaged ${property.name} for $${cost}`);
+    this.addLog(`${player.name} unmortgaged ${property.name} for £${cost}`);
     return { success: true, property: property };
   }
 
@@ -948,4 +1016,4 @@ class Game {
   }
 }
 
-module.exports = Game;
+module.exports = { Game, PLAYER_TOKENS, PLAYER_COLORS };

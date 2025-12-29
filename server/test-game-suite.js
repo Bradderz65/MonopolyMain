@@ -85,7 +85,7 @@ async function testJailMechanics() {
     log('\n=== Test: Jail Mechanics ===');
 
     // This is a unit test - we'll test the Game class directly
-    const Game = require('./game');
+    const { Game } = require('./game');
     const game = new Game('TEST', 'Test', 2, false, false);
 
     game.addPlayer('p1', 'Player1');
@@ -124,7 +124,7 @@ async function testJailMechanics() {
 async function testPropertyPurchase() {
     log('\n=== Test: Property Purchase ===');
 
-    const Game = require('./game');
+    const { Game } = require('./game');
     const game = new Game('TEST2', 'Test', 2, false, false);
 
     game.addPlayer('p1', 'Player1');
@@ -162,7 +162,7 @@ async function testPropertyPurchase() {
 async function testRentPayment() {
     log('\n=== Test: Rent Payment ===');
 
-    const Game = require('./game');
+    const { Game } = require('./game');
     const game = new Game('TEST3', 'Test', 2, false, false);
 
     game.addPlayer('p1', 'Player1');
@@ -198,7 +198,7 @@ async function testRentPayment() {
 async function testBuildingHouses() {
     log('\n=== Test: Building Houses ===');
 
-    const Game = require('./game');
+    const { Game } = require('./game');
     const game = new Game('TEST4', 'Test', 2, false, false);
 
     game.addPlayer('p1', 'Player1');
@@ -235,7 +235,7 @@ async function testBuildingHouses() {
 async function testMortgage() {
     log('\n=== Test: Mortgage ===');
 
-    const Game = require('./game');
+    const { Game } = require('./game');
     const game = new Game('TEST5', 'Test', 2, false, false);
 
     game.addPlayer('p1', 'Player1');
@@ -266,7 +266,7 @@ async function testMortgage() {
 async function testAuctionMinimumBid() {
     log('\n=== Test: Auction Minimum Bid ===');
 
-    const Game = require('./game');
+    const { Game } = require('./game');
     const game = new Game('TEST6', 'Test', 2, false, true); // auctions enabled
 
     game.addPlayer('p1', 'Player1');
@@ -357,7 +357,15 @@ async function runAllTests() {
         console.error('Test error:', err);
     }
 
-    process.exit(testsFailed > 0 ? 1 : 0);
+    return { passed: testsPassed, failed: testsFailed, skipped: 0 };
 }
 
-runAllTests();
+// Export for test runner
+module.exports = { runTests: runAllTests };
+
+// Run directly if executed as main
+if (require.main === module) {
+    runAllTests().then(result => {
+        process.exit(result.failed > 0 ? 1 : 0);
+    });
+}

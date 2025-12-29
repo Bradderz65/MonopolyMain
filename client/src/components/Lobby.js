@@ -1,6 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-function Lobby({ playerName, setPlayerName, games, createGame, joinGame, onReset }) {
+// Default character options (will be updated from server)
+const DEFAULT_TOKENS = [
+  { id: 'car', emoji: '🚗', name: 'Car' },
+  { id: 'hat', emoji: '🎩', name: 'Top Hat' },
+  { id: 'shoe', emoji: '👟', name: 'Shoe' },
+  { id: 'ship', emoji: '🚢', name: 'Ship' },
+  { id: 'dog', emoji: '🐕', name: 'Dog' },
+  { id: 'cat', emoji: '🐈', name: 'Cat' },
+  { id: 'thimble', emoji: '🧵', name: 'Thimble' },
+  { id: 'diamond', emoji: '💎', name: 'Diamond' }
+];
+
+const DEFAULT_COLORS = [
+  { id: 'red', hex: '#e74c3c', name: 'Red' },
+  { id: 'blue', hex: '#3498db', name: 'Blue' },
+  { id: 'green', hex: '#2ecc71', name: 'Green' },
+  { id: 'yellow', hex: '#f1c40f', name: 'Yellow' },
+  { id: 'purple', hex: '#9b59b6', name: 'Purple' },
+  { id: 'teal', hex: '#1abc9c', name: 'Teal' },
+  { id: 'orange', hex: '#e67e22', name: 'Orange' },
+  { id: 'pink', hex: '#ff6b9d', name: 'Pink' }
+];
+
+function Lobby({ playerName, setPlayerName, games, createGame, joinGame, onReset, socket }) {
   const [gameName, setGameName] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(4);
   const [isPrivate, setIsPrivate] = useState(false);
@@ -9,6 +32,24 @@ function Lobby({ playerName, setPlayerName, games, createGame, joinGame, onReset
   const [resetting, setResetting] = useState(false);
   const [showJoinByCode, setShowJoinByCode] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  
+  // Character selection state
+  const [selectedToken, setSelectedToken] = useState('car');
+  const [selectedColor, setSelectedColor] = useState('red');
+  const [availableTokens, setAvailableTokens] = useState(DEFAULT_TOKENS);
+  const [availableColors, setAvailableColors] = useState(DEFAULT_COLORS);
+
+  // Request character options on mount
+  useEffect(() => {
+    if (socket) {
+      socket.emit('getCharacterOptions', {});
+      socket.on('characterOptions', (options) => {
+        if (options.allTokens) setAvailableTokens(options.allTokens);
+        if (options.allColors) setAvailableColors(options.allColors);
+      });
+      return () => socket.off('characterOptions');
+    }
+  }, [socket]);
 
   const handleReset = async () => {
     if (!window.confirm('Are you sure you want to reset? This will delete ALL saved games and cannot be undone!')) {
@@ -31,7 +72,7 @@ function Lobby({ playerName, setPlayerName, games, createGame, joinGame, onReset
       alert('Please enter your name first');
       return;
     }
-    createGame(gameName || `${playerName}'s Game`, maxPlayers, isPrivate, auctionsEnabled);
+    createGame(gameName || `${playerName}'s Game`, maxPlayers, isPrivate, auctionsEnabled, selectedToken, selectedColor);
   };
 
   const handleJoinGame = (gameId) => {
@@ -39,7 +80,7 @@ function Lobby({ playerName, setPlayerName, games, createGame, joinGame, onReset
       alert('Please enter your name first');
       return;
     }
-    joinGame(gameId);
+    joinGame(gameId, selectedToken, selectedColor);
   };
 
   const handleJoinByCode = (e) => {
@@ -52,7 +93,7 @@ function Lobby({ playerName, setPlayerName, games, createGame, joinGame, onReset
       alert('Please enter a game code');
       return;
     }
-    joinGame(joinCode.trim().toUpperCase());
+    joinGame(joinCode.trim().toUpperCase(), selectedToken, selectedColor);
   };
 
   return (
@@ -75,6 +116,101 @@ function Lobby({ playerName, setPlayerName, games, createGame, joinGame, onReset
             maxLength={20}
           />
           {playerName && <span className="name-check">✓</span>}
+        </div>
+
+        {/* Character Selection */}
+        <div style={{
+          display: 'flex',
+          gap: '16px',
+          width: '100%',
+          justifyContent: 'center'
+        }}>
+          {/* Token Selection */}
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '12px',
+            padding: '12px',
+            flex: 1
+          }}>
+            <div style={{ 
+              color: 'rgba(255, 255, 255, 0.6)', 
+              fontSize: '0.75rem',
+              marginBottom: '8px',
+              textTransform: 'uppercase',
+              letterSpacing: '1px'
+            }}>Token</div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '6px'
+            }}>
+              {availableTokens.map((token) => (
+                <button
+                  key={token.id}
+                  onClick={() => setSelectedToken(token.id)}
+                  title={token.name}
+                  style={{
+                    background: selectedToken === token.id 
+                      ? 'rgba(78, 205, 196, 0.3)' 
+                      : 'rgba(255, 255, 255, 0.1)',
+                    border: selectedToken === token.id 
+                      ? '2px solid #4ecdc4' 
+                      : '2px solid transparent',
+                    borderRadius: '8px',
+                    padding: '8px',
+                    fontSize: '1.3rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {token.emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Color Selection */}
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '12px',
+            padding: '12px',
+            flex: 1
+          }}>
+            <div style={{ 
+              color: 'rgba(255, 255, 255, 0.6)', 
+              fontSize: '0.75rem',
+              marginBottom: '8px',
+              textTransform: 'uppercase',
+              letterSpacing: '1px'
+            }}>Color</div>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '6px'
+            }}>
+              {availableColors.map((color) => (
+                <button
+                  key={color.id}
+                  onClick={() => setSelectedColor(color.id)}
+                  title={color.name}
+                  style={{
+                    background: color.hex,
+                    border: selectedColor === color.id 
+                      ? '3px solid white' 
+                      : '3px solid transparent',
+                    borderRadius: '8px',
+                    width: '100%',
+                    aspectRatio: '1',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: selectedColor === color.id 
+                      ? `0 0 10px ${color.hex}` 
+                      : 'none'
+                  }}
+                />
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Available Games - Show prominently if any exist */}

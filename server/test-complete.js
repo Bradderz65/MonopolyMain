@@ -5,7 +5,7 @@
  */
 
 const io = require('socket.io-client');
-const Game = require('./game');
+const { Game } = require('./game');
 const GameManager = require('./gameManager');
 const fs = require('fs');
 const path = require('path');
@@ -1130,12 +1130,20 @@ async function runAllTests() {
     
     console.log('\n');
     
-    process.exit(testsFailed > 0 ? 1 : 0);
+    // Return results instead of exiting when called as module
+    return { passed: testsPassed, failed: testsFailed, skipped: testsSkipped };
 }
 
-// Run tests
-runAllTests().catch(err => {
-    console.error('Test suite error:', err);
-    process.exit(1);
-});
+// Export for test runner
+module.exports = { runTests: runAllTests };
+
+// Run directly if executed as main
+if (require.main === module) {
+    runAllTests().then(result => {
+        process.exit(result.failed > 0 ? 1 : 0);
+    }).catch(err => {
+        console.error('Test suite error:', err);
+        process.exit(1);
+    });
+}
 

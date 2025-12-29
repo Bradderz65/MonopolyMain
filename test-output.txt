@@ -1,0 +1,688 @@
+
+
+╔══════════════════════════════════════════════════════════════════════╗
+║                                                                      ║
+║          🎲 MONOPOLY COMPREHENSIVE TEST RUNNER 🎲                    ║
+║                                                                      ║
+║     Testing: Bot AI, Game Logic, Edge Cases, Integration            ║
+║                                                                      ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+📅 Test Run Started: 29/12/2025, 04:42:37
+
+
+══════════════════════════════════════════════════════════════════════
+  RUNNING: Bot AI Decision Tests
+══════════════════════════════════════════════════════════════════════
+
+
+
+╔════════════════════════════════════════════════════════════════╗
+║        BOT AI COMPREHENSIVE TESTING SUITE                      ║
+║    Testing ALL game events, decisions, and edge cases          ║
+╚════════════════════════════════════════════════════════════════╝
+
+🧪 Trade Decision Analysis
+[BOT RoboTycoon] Created with difficulty: HARD
+
+  📊 TRADE SCENARIO TESTS
+
+  ────────────────────────────────────────────────────────────
+  ✅ Fair money offer (£150 for £60 property) (Ratio: 2.50)
+[BOT RoboTycoon] Cash offer too low: £30 for £60 (0.50x, need 1.5x)
+  ✅ Lowball offer (£30 for £60 property) (Ratio: 0.50)
+  ✅ Threshold offer (£90 = 1.5x of £60) (Ratio: 1.50)
+[BOT RoboTycoon] Trade would give Player2 a monopoly!
+[BOT RoboTycoon] This property blocks Player2's monopoly!
+[BOT RoboTycoon] Cash offer too low: £250 for £120 (2.08x, need 4x)
+  ✅ Giving opponent monopoly (should decline) (Ratio: 2.08)
+[BOT RoboTycoon] Trade would give Player2 a monopoly!
+[BOT RoboTycoon] This property blocks Player2's monopoly!
+[BOT RoboTycoon] Accepting massive overpay: 4.2x value
+  ✅ Massive overpay for blocking property (£500 for £120) (Ratio: 4.17)
+[BOT RoboTycoon] Trade would complete my brown monopoly!
+  ✅ Completing MY monopoly (should accept) (Ratio: 1.44)
+  ✅ Jail card included in offer (£80+card for £60) (Ratio: 2.17)
+  ✅ Buying 3rd Railroad (synergy value) (Ratio: 1.14)
+[BOT RoboTycoon] Trade would complete my orange monopoly!
+[BOT RoboTycoon] Trade would give Player2 a monopoly!
+[BOT RoboTycoon] This property blocks Player2's monopoly!
+  ✅ Mutually Assured Monopoly (straight swap) (Ratio: 1.07)
+[BOT RoboTycoon] Trade would complete my orange monopoly!
+[BOT RoboTycoon] Trade would give Player2 a monopoly!
+[BOT RoboTycoon] This property blocks Player2's monopoly!
+  ✅ Mutually Assured Monopoly (sweetened +£300) (Ratio: 1.75)
+
+🧪 Negotiation Strategy (Progressive Bidding)
+[BOT PropertyKing] Created with difficulty: HARD
+
+  📊 PROGRESSIVE BIDDING TESTS
+
+  Testing how bot offers change with repeated rejections...
+  ────────────────────────────────────────────────────────────
+[BOT PropertyKing] Negotiation (attempt 0): Offering £340 for Park Lane (Value: £378 x 0.90)
+  Attempt 0: £340 (0.97x base value)
+[BOT PropertyKing] Negotiation (attempt 1): Offering £415 for Park Lane (Value: £378 x 1.10)
+  Attempt 1: £415 (1.19x base value)
+[BOT PropertyKing] Negotiation (attempt 2): Offering £491 for Park Lane (Value: £378 x 1.30)
+  Attempt 2: £491 (1.40x base value)
+[BOT PropertyKing] Negotiation (attempt 3): Offering £567 for Park Lane (Value: £378 x 1.50)
+  Attempt 3: £567 (1.62x base value)
+  ✅ Offers increase with each rejection
+
+🧪 Property Buying Decisions
+[BOT RealEstateBot] Created with difficulty: HARD
+
+  📊 PROPERTY BUYING SCENARIOS
+
+  ────────────────────────────────────────────────────────────
+[BOT RealEstateBot] Old Kent Road score: 0.80 (phase: early, difficulty: hard)
+  ✅ Cheap property (£60), have £1500
+  ✅ Expensive property (£400), have £250
+[BOT RealEstateBot] Whitechapel Road would complete monopoly!
+[BOT RealEstateBot] Whitechapel Road score: 1.29 (phase: early, difficulty: hard)
+  ✅ Completes monopoly (£60), have £150
+[BOT RealEstateBot] Pentonville Road blocks Player2's monopoly!
+[BOT RealEstateBot] Pentonville Road score: 1.17 (phase: early, difficulty: hard)
+  ✅ Blocks opponent monopoly
+[BOT RealEstateBot] Marylebone Station score: 0.90 (phase: early, difficulty: hard)
+  ✅ Railroad synergy (2nd railroad)
+[BOT RealEstateBot] Water Works score: 0.75 (phase: early, difficulty: hard)
+  ✅ Utility synergy (2nd utility)
+
+🧪 Auction Decisions
+[BOT PropertyKing] Created with difficulty: HARD
+
+  📊 AUCTION BIDDING TESTS
+
+  ────────────────────────────────────────────────────────────
+  ✅ Normal property auction limit (~£51)
+  ✅ Monopoly completion auction limit (> market price)
+  ✅ Blocking opponent auction limit (competitive)
+  ✅ Railroad synergy auction limit (> base price)
+  ✅ Auction limit respects cash reserve
+
+🧪 Building Decisions
+[BOT WealthBot] Created with difficulty: HARD
+
+  📊 HOUSE BUILDING TESTS
+
+  ────────────────────────────────────────────────────────────
+  ✅ Bot detects owned monopoly
+  ✅ Rich bot should build
+  ✅ Poor bot should not build
+  ✅ Bot detects multiple monopolies
+  ✅ Orange ranked higher than brown for building priority
+
+🧪 Jail Decisions
+[BOT LandBaron] Created with difficulty: HARD
+
+  📊 JAIL STRATEGY TESTS
+
+  ────────────────────────────────────────────────────────────
+  ✅ Bot should use jail card when available
+  ✅ Early game, rich - should pay fine to get out
+  ✅ Late game - should stay in jail for protection
+  ✅ Third turn - must pay or roll doubles
+  ✅ Poor player should try rolling doubles
+
+🧪 Bankruptcy Handling
+[BOT RoboTycoon] Created with difficulty: HARD
+
+  📊 BANKRUPTCY RECOVERY TESTS
+
+  ────────────────────────────────────────────────────────────
+  ✅ Sell houses from least valuable (brown) first
+  ✅ Mortgage cheapest property first
+  ✅ Bankruptcy asset calculation logic exists
+
+🧪 Game Phase Detection
+[BOT MonopolyMaster] Created with difficulty: HARD
+
+  📊 GAME PHASE TESTS
+
+  ────────────────────────────────────────────────────────────
+  ✅ No properties owned = early phase
+  ✅ Some properties owned = mid/early phase
+  ✅ Most properties owned = late phase
+
+🧪 Color Group Analysis
+[BOT MonopolyMaster] Created with difficulty: HARD
+
+  📊 COLOR GROUP ANALYSIS TESTS
+
+  ────────────────────────────────────────────────────────────
+  ✅ Bot owns 2 light-blue properties
+  ✅ Bot needs 1 more for light-blue monopoly
+  ✅ Bot has complete light-blue monopoly
+  ✅ Detects opponent dark-blue monopoly
+
+🧪 Rent Calculation Scenarios
+
+  📊 RENT CALCULATION TESTS
+
+  ────────────────────────────────────────────────────────────
+  ✅ Basic rent = £2
+  ✅ Monopoly doubles base rent
+  ✅ Rent with 3 houses
+  ✅ Hotel rent
+  ✅ One railroad = £25
+  ✅ Two railroads = £50
+  ✅ Three railroads = £100
+  ✅ Four railroads = £200
+  ✅ One utility = 4x dice
+  ✅ Two utilities = 10x dice
+  ✅ Mortgaged property = £0 rent
+
+🧪 Edge Cases
+
+  📊 EDGE CASE TESTS
+
+  ────────────────────────────────────────────────────────────
+  ✅ Triple doubles sends to jail
+  ✅ Cannot roll again after jail
+  ✅ Collect £200 when passing GO via card
+  ✅ Cannot build on mortgaged property
+  ✅ Must build evenly
+  ✅ Bot timeout detected after 30s
+
+🧪 Card Response Handling
+
+  📊 CARD RESPONSE TESTS
+
+  ────────────────────────────────────────────────────────────
+  ✅ Money card adds funds
+  ✅ Jail card sends to jail
+  ✅ Jail free card received
+  ✅ Move card changes position
+  ✅ Repairs card charges correctly (3 houses x £25)
+
+🧪 Trade Cooldown System
+
+  📊 TRADE COOLDOWN TESTS
+
+  ────────────────────────────────────────────────────────────
+[BOT RoboTycoon] Created with difficulty: HARD
+  ✅ Trade attempt tracked
+  ✅ Cooldown caps at 5 minutes
+  ✅ Bot gives up after 5 declines
+  ✅ Similar trades generate same hash
+
+🧪 Difficulty Level Comparison
+
+  📊 COMPARING EASY vs MEDIUM vs HARD BOT BEHAVIOR
+
+  [Trade Acceptance Thresholds]
+[BOT LearnBot] Created with difficulty: EASY
+[BOT SmartBot] Created with difficulty: MEDIUM
+[BOT WealthBot] Created with difficulty: HARD
+[BOT LearnBot] Cash offer too low: £50 for £60 (0.83x, need 1.2x)
+[BOT SmartBot] Cash offer too low: £50 for £60 (0.83x, need 1.3x)
+[BOT WealthBot] Cash offer too low: £50 for £60 (0.83x, need 1.5x)
+     Easy Bot:   ❌ DECLINES (threshold: 0.8)
+     Medium Bot: ❌ DECLINES (threshold: 1)
+     Hard Bot:   ❌ DECLINES (threshold: 1)
+  ✅ Easy bot has lower trade requirements than hard
+
+  [Property Buying Thresholds]
+[BOT CasualPlayer] Created with difficulty: EASY
+[BOT StrategistAI] Created with difficulty: MEDIUM
+[BOT RoboTycoon] Created with difficulty: HARD
+     Easy:   buyThreshold=0.1, reserve=£50
+     Medium: buyThreshold=0.2, reserve=£75
+     Hard:   buyThreshold=0.25, reserve=£100
+  ✅ Easy bot buys more aggressively (lower threshold)
+  ✅ Easy bot keeps less cash reserve
+
+  [Auction Aggressiveness & Randomness]
+[BOT BeginnerAI] Created with difficulty: EASY
+[BOT AdeptBot] Created with difficulty: MEDIUM
+[BOT RealEstateBot] Created with difficulty: HARD
+     Easy:   aggression=0.5, randomness=0.3
+     Medium: aggression=0.7, randomness=0.15
+     Hard:   aggression=0.85, randomness=0
+  ✅ Easy bot has more bid randomness (less optimal)
+  ✅ Hard bot is more aggressive in auctions
+
+  [Strategic Awareness]
+[BOT LearnBot] Created with difficulty: EASY
+[BOT StrategistAI] Created with difficulty: MEDIUM
+[BOT WealthBot] Created with difficulty: HARD
+     Easy:   recognizesBlocking=false, recognizesMonopolyValue=false
+     Medium: recognizesBlocking=true, recognizesMonopolyValue=true
+     Hard:   recognizesBlocking=true, recognizesMonopolyValue=true
+  ✅ Easy bot does NOT recognize blocking opportunities
+  ✅ Hard bot DOES recognize blocking opportunities
+  ✅ Hard bot DOES recognize monopoly value
+
+  [Jail Strategy]
+[BOT NewbieAI] Created with difficulty: EASY
+[BOT TacticalBot] Created with difficulty: MEDIUM
+[BOT LandBaron] Created with difficulty: HARD
+     Easy:   jailPayThreshold=£100, jailStayLateGame=false
+     Medium: jailPayThreshold=£150, jailStayLateGame=true
+     Hard:   jailPayThreshold=£200, jailStayLateGame=true
+  ✅ Easy bot pays jail fine with less money (suboptimal)
+  ✅ Only hard bot uses late-game jail staying strategy
+
+  [Blocking Property Multipliers]
+[BOT CasualPlayer] Created with difficulty: EASY
+[BOT AdeptBot] Created with difficulty: MEDIUM
+[BOT LandBaron] Created with difficulty: HARD
+     Easy:   blockingMultiplier=1.5x, monopolyMultiplier=2x
+     Medium: blockingMultiplier=2x, monopolyMultiplier=2.5x
+     Hard:   blockingMultiplier=2.5x, monopolyMultiplier=3x
+  ✅ Easy bot demands less for blocking properties
+  ✅ Easy bot demands less for monopoly-completing trades
+
+  [Color Group Value Awareness]
+[BOT NoviceBot] Created with difficulty: EASY
+[BOT RoboTycoon] Created with difficulty: HARD
+     Easy:   colorGroupAwareness=0.3
+     Hard:   colorGroupAwareness=1
+     Easy ranking:  orange=7.55, brown=5.45, diff=2.10
+     Hard ranking:  orange=10.00, brown=3.00, diff=7.00
+  ✅ Easy bot sees less difference between color groups
+
+  [Trade Proposal Frequency]
+[BOT NoviceBot] Created with difficulty: EASY
+[BOT StrategistAI] Created with difficulty: MEDIUM
+[BOT WealthBot] Created with difficulty: HARD
+     Easy:   proposeFrequency=0.3 (30% chance)
+     Medium: proposeFrequency=0.6 (60% chance)
+     Hard:   proposeFrequency=1 (100% chance)
+  ✅ Easy bot proposes trades less often
+
+  [Property Evaluation - Blocking Recognition]
+[BOT BeginnerAI] Created with difficulty: EASY
+[BOT RoboTycoon] Created with difficulty: HARD
+[BOT BeginnerAI] Northumberland Avenue score: 0.68 (phase: early, difficulty: easy)
+[BOT RoboTycoon] Northumberland Avenue score: 0.67 (phase: early, difficulty: hard)
+     Easy bot would buy: YES (may not recognize blocking value)
+     Hard bot would buy: YES (recognizes blocking value)
+  ✅ Hard bot buys blocking property
+
+  [Bot Names by Difficulty]
+[BOT NoviceBot] Created with difficulty: EASY
+[BOT ChallengerAI] Created with difficulty: MEDIUM
+[BOT RealEstateBot] Created with difficulty: HARD
+     Easy bot name:   NoviceBot (from easy pool)
+     Medium bot name: ChallengerAI (from medium pool)
+     Hard bot name:   RealEstateBot (from hard pool)
+  ✅ Easy bot has correct difficulty
+  ✅ Medium bot has correct difficulty
+  ✅ Hard bot has correct difficulty
+
+  ─────────────────────────────────────────────────────────────
+  📋 DIFFICULTY SUMMARY:
+     EASY:   Lower thresholds, no blocking awareness, random bidding
+     MEDIUM: Balanced play, some strategic awareness
+     HARD:   Optimal decisions, full strategic awareness
+  ─────────────────────────────────────────────────────────────
+
+
+⏱️  Tests completed in 0.08s
+
+
+╔════════════════════════════════════════════════════════════════╗
+║                    BOT AI TEST SUMMARY                         ║
+╠════════════════════════════════════════════════════════════════╣
+║  ✅ Passed:  86   tests                                     ║
+║  ❌ Failed:  0    tests                                     ║
+║  📊 Total:   86   tests                                     ║
+╚════════════════════════════════════════════════════════════════╝
+
+📊 TRADE DECISIONS:
+   Correct Decisions: 10/10 (100%)
+
+📋 KEY OBSERVATIONS:
+   ✓ Bot correctly identifies fair vs unfair trades
+   ✓ Bot refuses to give opponents winning monopolies
+   ✓ Bot pays premiums to complete its own sets
+   ✓ Progressive negotiation increases offers
+   ✓ Jail strategy adapts to game phase
+   ✓ Bankruptcy recovery prioritizes asset retention
+   ✓ All rent calculations are correct
+   ✓ Edge cases handled properly
+   ✓ Difficulty levels affect all strategic decisions
+
+══════════════════════════════════════════════════════════════════════
+  RUNNING: Complete Game Mechanics Tests
+══════════════════════════════════════════════════════════════════════
+
+
+
+╔════════════════════════════════════════════════════════════════╗
+║          MONOPOLY COMPREHENSIVE TEST SUITE                     ║
+║          Testing all game features and mechanics               ║
+╚════════════════════════════════════════════════════════════════╝
+
+
+═══ UNIT TESTS: Game Logic ═══
+
+🧪 Game Creation
+  ✅ PASS: Game has an ID
+  ✅ PASS: Game name is set
+  ✅ PASS: Max players is set
+  ✅ PASS: Game is not started initially
+  ✅ PASS: No players initially
+  ✅ PASS: Board has 40 spaces
+  ✅ PASS: Houses available is 32
+  ✅ PASS: Hotels available is 12
+
+🧪 Player Management
+  ✅ PASS: First player added successfully
+  ✅ PASS: Player name is correct
+  ✅ PASS: Player starts with £1500
+  ✅ PASS: Player starts at position 0
+  ✅ PASS: First player is host
+  ✅ PASS: Player has no properties
+  ✅ PASS: Second player added successfully
+  ✅ PASS: Second player is not host
+  ✅ PASS: Cannot add player beyond max
+  ✅ PASS: Player removed before game start
+  ✅ PASS: Remaining player becomes host
+
+🧪 Game Start
+  ✅ PASS: Game is marked as started
+  ✅ PASS: Current player index is valid
+  ✅ PASS: Turn start time is set
+  ✅ PASS: Game log has entries
+
+🧪 Dice Rolling
+  ✅ PASS: All dice rolls are valid (1-6)
+  ✅ PASS: diceRolled starts as false
+  ✅ PASS: diceRolled flag is set after rolling
+
+🧪 Player Movement
+  ✅ PASS: Player moves forward correctly
+  ✅ PASS: Player wraps around board
+  ✅ PASS: Player collects £200 for passing GO
+  ✅ PASS: movePlayerTo works correctly
+
+🧪 Property Purchase
+  ✅ PASS: Property purchase succeeds
+  ✅ PASS: Property owner is set
+  ✅ PASS: Property added to player
+  ✅ PASS: Money deducted correctly
+  ✅ PASS: Pending action cleared
+  ✅ PASS: Cannot buy without enough money
+
+🧪 Rent Calculation
+  ✅ PASS: Basic rent is correct
+  ✅ PASS: Monopoly doubles base rent
+  ✅ PASS: One railroad = £25
+  ✅ PASS: Two railroads = £50
+  ✅ PASS: One utility = 4x dice
+  ✅ PASS: Two utilities = 10x dice
+
+🧪 Rent Payment
+  ✅ PASS: Owner receives rent
+  ✅ PASS: Renter pays rent
+
+🧪 House Building
+  ✅ PASS: House build succeeds
+  ✅ PASS: Property has 1 house
+  ✅ PASS: House cost deducted
+  ✅ PASS: House supply decreased
+  ✅ PASS: Must build evenly
+  ✅ PASS: Can build on other property
+  ✅ PASS: Cannot build without monopoly
+
+🧪 Hotel Building
+  ✅ PASS: Has 4 houses before hotel
+  ✅ PASS: Hotel build succeeds
+  ✅ PASS: Houses = 5 indicates hotel
+  ✅ PASS: 4 houses returned to supply
+  ✅ PASS: Hotel taken from supply
+
+🧪 House Selling
+  ✅ PASS: House sell succeeds
+  ✅ PASS: House count decreased
+  ✅ PASS: Received half value
+  ✅ PASS: Must sell evenly
+
+🧪 Mortgaging
+  ✅ PASS: Mortgage succeeds
+  ✅ PASS: Property is mortgaged
+  ✅ PASS: Received mortgage value
+  ✅ PASS: Cannot re-mortgage
+  ✅ PASS: Unmortgage succeeds
+  ✅ PASS: Property is unmortgaged
+  ✅ PASS: Paid unmortgage cost (10% interest)
+
+🧪 Jail Mechanics
+  ✅ PASS: Player is in jail
+  ✅ PASS: Player is at jail position
+  ✅ PASS: Jail turns reset
+  ✅ PASS: Cannot roll again after going to jail
+  ✅ PASS: Jail fine payment succeeds
+  ✅ PASS: Player released from jail
+  ✅ PASS: £50 fine paid
+  ✅ PASS: Can roll dice after paying fine
+  ✅ PASS: Jail card use succeeds
+  ✅ PASS: Player released
+  ✅ PASS: Card used up
+
+🧪 Auctions
+  ✅ PASS: Auction started
+  ✅ PASS: Minimum bid is £10
+  ✅ PASS: Pending action cleared
+  ✅ PASS: Bid below minimum rejected
+  ✅ PASS: Valid bid accepted
+  ✅ PASS: Current bid updated
+  ✅ PASS: Highest bidder set
+  ✅ PASS: Auction completed
+  ✅ PASS: Winner owns property
+
+🧪 Trades
+  ✅ PASS: Trade proposed
+  ✅ PASS: Trade is pending
+  ✅ PASS: Trade added to list
+  ✅ PASS: Trade accepted
+  ✅ PASS: Money transferred from trader 1
+  ✅ PASS: Money transferred to trader 2
+  ✅ PASS: Property 1 transferred
+  ✅ PASS: Property 3 transferred
+  ✅ PASS: Trade declined
+
+🧪 Bankruptcy
+  ✅ PASS: Player is bankrupt
+  ✅ PASS: Money reset to 0
+  ✅ PASS: Properties cleared
+  ✅ PASS: Property returned to bank
+
+🧪 Win Condition
+  ✅ PASS: Winner detected when one player left
+  ✅ PASS: Correct winner returned
+  ✅ PASS: No winner when multiple players
+
+🧪 Chance Cards
+  ✅ PASS: Chance cards are drawn
+  ✅ PASS: Chance index is valid
+
+🧪 Community Chest Cards
+  ✅ PASS: Community Chest cards are drawn
+
+🧪 Landing on Different Space Types
+  ✅ PASS: Landing on GO works
+  ✅ PASS: Tax paid correctly
+  ✅ PASS: Free Parking collected
+  ✅ PASS: Free Parking reset
+  ✅ PASS: Go to Jail sends to jail
+  ✅ PASS: Go to Jail moves to jail
+
+🧪 End Turn
+  ✅ PASS: Dice rolled reset
+  ✅ PASS: Can roll again reset
+  ✅ PASS: Pending action cleared
+  ✅ PASS: Turn advanced
+
+🧪 Bot Timeout Detection
+  ✅ PASS: No timeout for recent turn
+  ✅ PASS: Bot timeout detected
+
+🧪 Game State Serialization
+  ✅ PASS: State includes game ID
+  ✅ PASS: State includes started flag
+  ✅ PASS: State includes players
+  ✅ PASS: State includes board
+  ✅ PASS: State includes game log
+  ✅ PASS: Player properties included
+
+
+═══ UNIT TESTS: Game Manager ═══
+
+🧪 Game Manager
+  ✅ PASS: Game created via manager
+  ✅ PASS: Game count is 1
+  ✅ PASS: Game can be retrieved
+  ✅ PASS: Public games list works
+  ✅ PASS: Game removed
+
+🧪 Game Persistence
+Saved 1 games to disk
+  ✅ PASS: Games saved to disk
+  ✅ PASS: Game state preserved correctly
+
+
+═══ EDGE CASE TESTS ═══
+
+🧪 Edge Cases
+  ✅ PASS: Triple doubles sends to jail
+  ✅ PASS: Cannot roll again after going to jail
+  ✅ PASS: Mortgaged property gives no rent
+  ✅ PASS: Cannot build on mortgaged property
+  ✅ PASS: Cannot mortgage property with houses
+
+🧪 Color Naming Consistency
+  ✅ PASS: Color "brown" exists in board
+  ✅ PASS: Color "light-blue" exists in board
+  ✅ PASS: Color "pink" exists in board
+  ✅ PASS: Color "orange" exists in board
+  ✅ PASS: Color "red" exists in board
+  ✅ PASS: Color "yellow" exists in board
+  ✅ PASS: Color "green" exists in board
+  ✅ PASS: Color "dark-blue" exists in board
+  ✅ PASS: Color "brown" is valid
+  ✅ PASS: Color "light-blue" is valid
+  ✅ PASS: Color "pink" is valid
+  ✅ PASS: Color "orange" is valid
+  ✅ PASS: Color "red" is valid
+  ✅ PASS: Color "yellow" is valid
+  ✅ PASS: Color "green" is valid
+  ✅ PASS: Color "dark-blue" is valid
+
+
+═══ INTEGRATION TESTS ═══
+
+🧪 Socket.io Connection (requires running server)
+  ✅ PASS: Can connect to server
+
+🧪 Socket.io Game Flow (requires running server)
+  ✅ PASS: Game created via socket
+  ✅ PASS: Player2 joined via socket
+  ✅ PASS: Game started via socket
+  ✅ PASS: Dice roll via socket works
+
+🧪 Bot Integration (requires running server)
+  ⏭️  SKIP: Bot integration - Server not running
+
+
+
+╔════════════════════════════════════════════════════════════════╗
+║                         TEST RESULTS                           ║
+╠════════════════════════════════════════════════════════════════╣
+║  ✅ Passed:  157  tests                                     ║
+║  ❌ Failed:  0    tests                                     ║
+║  ⏭️  Skipped: 1    tests                                     ║
+║  ⏱️  Duration: 5.08s                                          ║
+╚════════════════════════════════════════════════════════════════╝
+
+
+
+══════════════════════════════════════════════════════════════════════
+  RUNNING: Game Suite Tests
+══════════════════════════════════════════════════════════════════════
+
+
+╔══════════════════════════════════════╗
+║   MONOPOLY GAME TEST SUITE           ║
+╚══════════════════════════════════════╝
+
+[TEST] 
+=== Test: Jail Mechanics ===
+✅ PASS: Player sent to jail correctly
+✅ PASS: Jail fine payment works
+✅ PASS: Dice reset after paying jail fine
+[TEST] 
+=== Test: Property Purchase ===
+✅ PASS: Property purchased correctly
+✅ PASS: Money deducted correctly
+✅ PASS: Pending action cleared after purchase
+[TEST] 
+=== Test: Rent Payment ===
+✅ PASS: Owner received rent
+✅ PASS: Renter paid rent
+[TEST] 
+=== Test: Building Houses ===
+✅ PASS: House built successfully
+✅ PASS: House cost deducted
+[TEST] 
+=== Test: Mortgage ===
+✅ PASS: Property mortgaged
+✅ PASS: Mortgage money received
+[TEST] 
+=== Test: Auction Minimum Bid ===
+✅ PASS: Auction has £10 minimum bid
+✅ PASS: Bid below minimum rejected
+✅ PASS: Valid bid accepted
+[TEST] 
+=== Test: Game Persistence ===
+Saved 1 games to disk
+✅ PASS: Games saved to disk
+✅ PASS: Game state preserved correctly
+
+╔══════════════════════════════════════╗
+║   RESULTS: 17 passed, 0 failed          ║
+╚══════════════════════════════════════╝
+
+
+
+╔══════════════════════════════════════════════════════════════════════╗
+║                     FINAL TEST REPORT                                ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  ✅ Bot AI Decision Tests                     86/ 86 (100%)    ║
+║  ✅ Complete Game Mechanics Tests            157/157 (100%)    ║
+║  ✅ Game Suite Tests                          17/ 17 (100%)    ║
+╠══════════════════════════════════════════════════════════════════════╣
+║                                                                      ║
+║  📊 TOTAL RESULTS                                                    ║
+║  ─────────────────                                                   ║
+║  ✅ Passed:   260  tests                                           ║
+║  ❌ Failed:   0    tests                                           ║
+║  ⏭️  Skipped:  1    tests                                           ║
+║  📈 Pass Rate: 100.0%                                                   ║
+║  ⏱️  Duration:  5.21s                                                ║
+║                                                                      ║
+║  🎉 ALL TESTS PASSED! Bot is performing correctly.                  ║
+║                                                                      ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+📋 TEST COVERAGE SUMMARY:
+   ✓ Trade decisions (accept/decline/negotiate)
+   ✓ Property buying strategy
+   ✓ Auction bidding logic
+   ✓ Building decisions
+   ✓ Jail strategy (pay/roll/card)
+   ✓ Bankruptcy handling
+   ✓ Game phase detection
+   ✓ Color group analysis
+   ✓ Rent calculations (all property types)
+   ✓ Chance/Community Chest card handling
+   ✓ Edge cases (triple doubles, mortgaged builds, etc.)
+   ✓ Trade cooldown system
+   ✓ Bot timeout detection
+   ✓ Game persistence
+   ✓ Win condition detection
+
