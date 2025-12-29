@@ -219,7 +219,7 @@ function Board({ board, players, onSpaceClick, animatingPlayer, followMode, foll
           </div>
         )}
         {playersOnSpace.length > 0 && (
-          <div className="space-players">
+          <div className={`space-players ${playersOnSpace.length > 1 ? 'crowded' : ''}`}>
             {playersOnSpace.map(player => (
               <span key={player.id} className="player-piece" title={player.name}>
                 {player.token}

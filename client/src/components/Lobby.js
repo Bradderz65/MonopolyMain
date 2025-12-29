@@ -119,49 +119,17 @@ function Lobby({ playerName, setPlayerName, games, createGame, joinGame, onReset
         </div>
 
         {/* Character Selection */}
-        <div style={{
-          display: 'flex',
-          gap: '16px',
-          width: '100%',
-          justifyContent: 'center'
-        }}>
+        <div className="lobby-character-selection">
           {/* Token Selection */}
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '12px',
-            padding: '12px',
-            flex: 1
-          }}>
-            <div style={{ 
-              color: 'rgba(255, 255, 255, 0.6)', 
-              fontSize: '0.75rem',
-              marginBottom: '8px',
-              textTransform: 'uppercase',
-              letterSpacing: '1px'
-            }}>Token</div>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '6px'
-            }}>
+          <div className="lobby-token-selection">
+            <div className="selection-label">Token</div>
+            <div className="token-grid">
               {availableTokens.map((token) => (
                 <button
                   key={token.id}
                   onClick={() => setSelectedToken(token.id)}
                   title={token.name}
-                  style={{
-                    background: selectedToken === token.id 
-                      ? 'rgba(78, 205, 196, 0.3)' 
-                      : 'rgba(255, 255, 255, 0.1)',
-                    border: selectedToken === token.id 
-                      ? '2px solid #4ecdc4' 
-                      : '2px solid transparent',
-                    borderRadius: '8px',
-                    padding: '8px',
-                    fontSize: '1.3rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
+                  className={`token-button ${selectedToken === token.id ? 'selected' : ''}`}
                 >
                   {token.emoji}
                 </button>
@@ -170,39 +138,17 @@ function Lobby({ playerName, setPlayerName, games, createGame, joinGame, onReset
           </div>
 
           {/* Color Selection */}
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: '12px',
-            padding: '12px',
-            flex: 1
-          }}>
-            <div style={{ 
-              color: 'rgba(255, 255, 255, 0.6)', 
-              fontSize: '0.75rem',
-              marginBottom: '8px',
-              textTransform: 'uppercase',
-              letterSpacing: '1px'
-            }}>Color</div>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '6px'
-            }}>
+          <div className="lobby-color-selection">
+            <div className="selection-label">Color</div>
+            <div className="color-grid">
               {availableColors.map((color) => (
                 <button
                   key={color.id}
                   onClick={() => setSelectedColor(color.id)}
                   title={color.name}
+                  className={`color-button ${selectedColor === color.id ? 'selected' : ''}`}
                   style={{
                     background: color.hex,
-                    border: selectedColor === color.id 
-                      ? '3px solid white' 
-                      : '3px solid transparent',
-                    borderRadius: '8px',
-                    width: '100%',
-                    aspectRatio: '1',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
                     boxShadow: selectedColor === color.id 
                       ? `0 0 10px ${color.hex}` 
                       : 'none'
