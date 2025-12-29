@@ -1,0 +1,11 @@
+{
+    "watch": [
+        "server"
+    ],
+    "ext": "js,json",
+    "ignore": [
+        "server/saved_games.json",
+        "server/test-*.js"
+    ],
+    "exec": "node server/index.js"
+}
