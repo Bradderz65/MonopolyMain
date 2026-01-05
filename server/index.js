@@ -193,10 +193,10 @@ io.on('connection', (socket) => {
     try {
       const game = gameManager.createGame(gameName, maxPlayers, isPrivate, auctionsEnabled || false);
       const player = game.addPlayer(socket.id, playerName, tokenId, colorId);
-      
+
       if (!player) {
-         socket.emit('error', { message: 'Failed to create game player' });
-         return;
+        socket.emit('error', { message: 'Failed to create game player' });
+        return;
       }
 
       socket.join(game.id);
@@ -221,14 +221,14 @@ io.on('connection', (socket) => {
       socket.emit('error', { message: 'Game is full' });
       return;
     }
-    
+
     try {
       // Bots automatically get assigned available token/color (pass null)
       const player = game.addPlayer(socket.id, playerName, isBot ? null : tokenId, isBot ? null : colorId);
-      
+
       if (!player) {
-         socket.emit('error', { message: 'Failed to join game' });
-         return;
+        socket.emit('error', { message: 'Failed to join game' });
+        return;
       }
 
       if (isBot) {
@@ -280,6 +280,21 @@ io.on('connection', (socket) => {
         space.owner = socket.id;
       }
     });
+
+    // Update auction participants and passedPlayers if there's an active auction
+    if (game.auction) {
+      const participantIndex = game.auction.participants.indexOf(oldSocketId);
+      if (participantIndex !== -1) {
+        game.auction.participants[participantIndex] = socket.id;
+      }
+      const passedIndex = game.auction.passedPlayers.indexOf(oldSocketId);
+      if (passedIndex !== -1) {
+        game.auction.passedPlayers[passedIndex] = socket.id;
+      }
+      if (game.auction.highestBidder === oldSocketId) {
+        game.auction.highestBidder = socket.id;
+      }
+    }
 
     socket.join(game.id);
 
@@ -426,13 +441,20 @@ io.on('connection', (socket) => {
     if (!player) return;
     const beforeAuction = game.auction;
     const result = game.placeBid(player, amount);
-    io.to(game.id).emit('auctionUpdate', { auction: game.auction, game: game.getState() });
-    if (result.success && beforeAuction && !game.auction) {
-      io.to(game.id).emit('auctionEnded', {
-        winner: { id: player.id, name: player.name },
-        property: beforeAuction.property,
-        amount: amount
-      });
+
+    // Only broadcast update if bid was successful
+    if (result.success) {
+      io.to(game.id).emit('auctionUpdate', { auction: game.auction, game: game.getState() });
+      if (beforeAuction && !game.auction) {
+        io.to(game.id).emit('auctionEnded', {
+          winner: { id: player.id, name: player.name },
+          property: beforeAuction.property,
+          amount: amount
+        });
+      }
+    } else {
+      // Send error back to the bidder so they know the bid failed
+      socket.emit('error', { message: result.message || 'Bid failed' });
     }
   });
 

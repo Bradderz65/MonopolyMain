@@ -1330,6 +1330,11 @@ class MonopolyBot {
 
         if (!auction || !this.myPlayer) return;
         if (auction.passedPlayers?.includes(this.myPlayer.id)) return;
+        
+        // Don't bid if we're already the highest bidder - wait for others to act
+        if (auction.highestBidder === this.myPlayer.id) {
+            return;
+        }
 
         const minDelayMs = auction.minBidDelayMs || 0;
         const lastBidAt = auction.lastBidAt || 0;

@@ -22,6 +22,7 @@ class GameManager {
             name: game.name,
             maxPlayers: game.maxPlayers,
             isPrivate: game.isPrivate,
+            auctionsEnabled: game.auctionsEnabled,
             players: game.players,
             started: game.started,
             currentPlayerIndex: game.currentPlayerIndex,
@@ -59,7 +60,7 @@ class GameManager {
         const botsToRespawn = [];
 
         savedGames.forEach(savedGame => {
-          const game = new Game(savedGame.id, savedGame.name, savedGame.maxPlayers, savedGame.isPrivate);
+          const game = new Game(savedGame.id, savedGame.name, savedGame.maxPlayers, savedGame.isPrivate, savedGame.auctionsEnabled);
           // Restore all game state
           Object.assign(game, savedGame);
           // Mark all players as disconnected initially
