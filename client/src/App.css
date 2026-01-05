@@ -1239,7 +1239,7 @@
 /* Card Display at Top Center (Community Chest and Chance) */
 .card-display-top {
   position: fixed;
-  top: 60px;
+  top: 50px;
   left: 50%;
   transform: translateX(-50%);
   width: clamp(280px, 40vw, 400px);
@@ -1318,7 +1318,8 @@
 
 @media (max-width: 600px) {
   .card-display-top {
-    top: 50px;
+  top: 20px;
+
     width: calc(100vw - 20px);
     max-width: 320px;
   }
@@ -1667,6 +1668,44 @@
   gap: 10px;
 }
 
+.owner-dot-controls {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+}
+
+.owner-dot-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.owner-dot-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.owner-dot-controls .owner-dot-button {
+  min-width: 28px;
+  height: 26px;
+  padding: 4px 6px;
+}
+
+.owner-dot-size {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 900px) {
+  .owner-dot-controls {
+    display: flex;
+  }
+}
+
 .player-card {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 10px;
@@ -1733,9 +1772,19 @@
 }
 
 .player-properties {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: repeat(10, 12px);
+  grid-auto-rows: 12px;
+  gap: 3px;
+  justify-content: start;
+}
+
+@media (max-width: 900px) {
+  .player-properties {
+    grid-template-columns: repeat(10, 14px);
+    grid-auto-rows: 14px;
+    gap: 4px;
+  }
 }
 
 .property-dot {
@@ -3470,11 +3519,24 @@
 .property-item-actions {
   display: flex;
   gap: 6px;
+  align-items: center;
 }
 
 .property-item-actions .btn {
   padding: 4px 8px;
   font-size: 0.75rem;
+  min-width: 32px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  line-height: 1;
+}
+
+.property-item-actions .house-action-symbol,
+.property-item-actions .house-action-icon {
+  line-height: 1;
 }
 
 /* Trade Styles */
@@ -3629,10 +3691,71 @@
   margin-bottom: 8px;
 }
 
+.trade-side-title {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.trade-side-title.offer {
+  color: #2ecc71;
+}
+
+.trade-side-title.request {
+  color: #e74c3c;
+}
+
+.trade-list-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 6px;
+}
+
+.trade-property-list {
+  max-height: 140px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.trade-property-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.trade-property-option input {
+  flex-shrink: 0;
+}
+
+.trade-property-name {
+  flex: 1;
+}
+
+.trade-empty {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
 .trade-actions {
   display: flex;
   gap: 10px;
   margin-top: 10px;
+}
+
+.trade-content {
+  flex-wrap: wrap;
+}
+
+.trade-side {
+  min-width: 200px;
+}
+
+@media (max-width: 900px) {
+  .trade-side {
+    min-width: 0;
+  }
 }
 
 .trade-actions .btn {
@@ -3754,6 +3877,39 @@
     font-size: clamp(0.7rem, 4vw, 1.2rem);
   }
 
+  .space-name.space-icon-stack {
+    justify-content: center;
+    gap: 2px;
+    padding: 0;
+  }
+
+  .space-icon-emoji {
+    font-size: clamp(0.7rem, 4vw, 1.2rem);
+  }
+
+  .space-icon-emoji.go-to-jail-hand {
+    transform: rotate(-45deg) scale(0.9);
+  }
+
+  .space-icon-label {
+    font-size: clamp(0.22rem, 1.8vw, 0.4rem);
+    line-height: 1.1;
+    white-space: normal;
+    text-align: center;
+    word-break: normal;
+    overflow-wrap: normal;
+  }
+
+  .space-icon-label.community-chest-label {
+    font-size: clamp(0.2rem, 1.6vw, 0.34rem);
+    letter-spacing: 0;
+  }
+
+  .board-space.left .space-name.space-icon-stack,
+  .board-space.right .space-name.space-icon-stack {
+    padding: 0 2px;
+  }
+
   .space-price {
     font-size: clamp(0.2rem, 1.8vw, 0.35rem);
   }
@@ -3810,6 +3966,11 @@
   top: 0;
 }
 
+.board-space.top .space-color-bar,
+.board-space.bottom .space-color-bar {
+  height: 15.38%;
+}
+
 .space-name {
   flex: 1;
   display: flex;
@@ -3831,6 +3992,38 @@
 .space-name.space-icon {
   font-size: clamp(1rem, 3vw, 2rem);
   line-height: 1;
+}
+
+.space-name.space-icon-stack {
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 0;
+}
+
+.space-icon-emoji {
+  font-size: clamp(1rem, 3vw, 2rem);
+  line-height: 1;
+}
+
+.space-icon-emoji.go-to-jail-hand {
+  transform: rotate(-45deg);
+}
+
+.space-icon-label {
+  font-size: clamp(0.35rem, 0.9vw, 0.6rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.board-space.corner .space-icon-label {
+  margin-top: 5px;
+}
+
+.board-space.left .space-name.space-icon-stack,
+.board-space.right .space-name.space-icon-stack {
+  padding: 0 3px;
 }
 
 .space-price {
@@ -3879,7 +4072,7 @@
 }
 
 .player-piece {
-  font-size: clamp(0.8rem, 2vw, 1.5rem);
+  font-size: calc(clamp(0.8rem, 2vw, 1.5rem) * var(--player-piece-scale, 1));
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
   animation: bounce 0.5s ease;
   line-height: 1;
@@ -3890,10 +4083,6 @@
   gap: 1px;
   max-height: 60%;
   overflow: hidden;
-}
-
-.space-players.crowded .player-piece {
-  font-size: clamp(0.55rem, 1.2vw, 0.9rem);
 }
 
 @keyframes bounce {
@@ -3908,30 +4097,51 @@
   }
 }
 
-/* Owner indicator - corner flag/triangle design */
+/* Owner indicator - quarter circle badge */
 .space-owner-indicator {
   position: absolute;
   top: 0;
   right: 0;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0 12px 12px 0;
-  border-color: transparent;
+  width: 12px;
+  height: 12px;
+  background: var(--owner-color, transparent);
+  border-radius: 0 0 0 100%;
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(0, 0, 0, 0.4);
   z-index: 5;
-  filter: drop-shadow(-1px 1px 2px rgba(0, 0, 0, 0.4));
+  transform: scale(1);
+  transform-origin: top right;
 }
+
+@media (max-width: 900px) {
+  .space-owner-indicator {
+    width: 14px;
+    height: 14px;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95), 0 1px 3px rgba(0, 0, 0, 0.5);
+    transform: scale(calc(var(--owner-dot-scale, 1) * 0.7));
+  }
+}
+
+@media (max-width: 600px) {
+  .space-owner-indicator {
+    width: 12px;
+    height: 12px;
+    box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+}
+
 
 /* Small ownership dot for extra visibility */
 .space-owner-indicator .owner-dot {
   position: absolute;
-  top: 2px;
-  right: -10px;
+  top: 1px;
+  right: -11px;
   width: 6px;
   height: 6px;
   border-radius: 50%;
   box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(0, 0, 0, 0.5);
   border: 0.5px solid rgba(0, 0, 0, 0.2);
+  transform: scale(var(--owner-dot-scale, 1));
+  transform-origin: top right;
 }
 
 @media (max-width: 900px) {
@@ -3943,11 +4153,13 @@
   .space-owner-indicator .owner-dot {
     width: 7px;
     height: 7px;
-    right: -11px;
-    top: 2px;
+    right: -12px;
+    top: 1px;
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95), 0 1px 3px rgba(0, 0, 0, 0.6);
     border: 0.5px solid rgba(0, 0, 0, 0.3);
   }
+
+
 }
 
 @media (max-width: 600px) {
@@ -3958,10 +4170,12 @@
   .space-owner-indicator .owner-dot {
     width: 6px;
     height: 6px;
-    right: -9px;
-    top: 2px;
+    right: -11px;
+    top: 1px;
     box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(0, 0, 0, 0.5);
   }
+
+
 }
 
 .space-mortgaged {
@@ -4083,9 +4297,14 @@
 
 /* Card Decks in Center */
 .card-decks {
+  --deck-stack-offset: -8px;
   display: flex;
   gap: clamp(10px, 3vw, 30px);
   margin: clamp(8px, 2vw, 20px) 0;
+}
+
+.deck-stack {
+  transform: translateY(-8px);
 }
 
 .card-deck {
@@ -4102,6 +4321,7 @@
   position: relative;
   width: clamp(45px, 10vw, 85px);
   height: clamp(60px, 13vw, 115px);
+  transform: translateY(var(--deck-stack-offset));
 }
 
 .deck-card {
@@ -4152,7 +4372,7 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) translateY(var(--deck-stack-offset));
   font-size: clamp(1.2rem, 3.5vw, 2.5rem);
   font-weight: 800;
   color: rgba(255, 255, 255, 0.9);
@@ -4254,6 +4474,7 @@
   }
 
   .card-decks {
+    --deck-stack-offset: 4px;
     gap: 30px;
     margin: 8px 0;
   }
@@ -4265,11 +4486,8 @@
   .center-info {
     margin-top: 20px;
   }
-
-  .flying-card {
-    width: 180px;
-  }
 }
+
 
 /* Color mappings */
 .color-brown {

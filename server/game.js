@@ -69,9 +69,17 @@ class Game {
     const usedTokens = this.players.map(p => p.tokenId);
     const usedColors = this.players.map(p => p.colorId);
 
+    // Validate if requested options are available
+    if (tokenId && usedTokens.includes(tokenId)) {
+      throw new Error('Character is already taken');
+    }
+    if (colorId && usedColors.includes(colorId)) {
+      throw new Error('Color is already taken');
+    }
+
     // Find available token (use specified or first available)
     let selectedToken;
-    if (tokenId && !usedTokens.includes(tokenId)) {
+    if (tokenId) {
       selectedToken = PLAYER_TOKENS.find(t => t.id === tokenId);
     }
     if (!selectedToken) {
@@ -80,7 +88,7 @@ class Game {
 
     // Find available color (use specified or first available)
     let selectedColor;
-    if (colorId && !usedColors.includes(colorId)) {
+    if (colorId) {
       selectedColor = PLAYER_COLORS.find(c => c.id === colorId);
     }
     if (!selectedColor) {

@@ -52,141 +52,116 @@ function TradePanel({ myPlayer, players, board, proposeTrade, onClose }) {
   };
 
   return (
-    <div className="trade-card" style={{ marginTop: 15 }}>
-      <h4 style={{ marginBottom: 15 }}>Propose Trade</h4>
-      
-      <div className="form-group">
-        <label>Trade with:</label>
-        <select 
-          value={targetPlayer} 
-          onChange={(e) => {
-            setTargetPlayer(e.target.value);
-            setRequestProperties([]);
-          }}
-        >
-          <option value="">Select player...</option>
-          {otherPlayers.map(p => (
-            <option key={p.id} value={p.id}>{p.token} {p.name}</option>
-          ))}
-        </select>
-      </div>
-
-      <div style={{ display: 'flex', gap: 15, marginTop: 15 }}>
-        <div style={{ flex: 1 }}>
-          <h5 style={{ fontSize: '0.85rem', marginBottom: 10, color: '#4ecdc4' }}>You Offer:</h5>
-          <div className="form-group">
-            <label style={{ fontSize: '0.8rem' }}>Money:</label>
-            <input
-              type="number"
-              min="0"
-              max={myPlayer?.money || 0}
-              value={offerMoney}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === '') {
-                  setOfferMoney('');
-                } else {
-                  const num = parseInt(value);
-                  if (!isNaN(num) && num >= 0) {
-                    setOfferMoney(value);
-                  }
-                }
-              }}
-              style={{ padding: '8px', fontSize: '0.85rem' }}
-            />
-          </div>
-          <div style={{ fontSize: '0.8rem', marginBottom: 5 }}>Properties:</div>
-          <div style={{ maxHeight: 120, overflowY: 'auto' }}>
-            {myPlayer?.properties.filter(p => !p.houses).map(prop => (
-              <label 
-                key={prop.index} 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 8, 
-                  padding: '4px 0',
-                  cursor: 'pointer',
-                  fontSize: '0.8rem'
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={offerProperties.includes(prop.index)}
-                  onChange={() => toggleOfferProperty(prop.index)}
-                />
-                {prop.name}
-              </label>
+    <div className="action-card trade-card trade-panel">
+      <div className="action-card-header">🤝 Propose Trade</div>
+      <div className="action-card-body">
+        <div className="form-group">
+          <label>Trade with:</label>
+          <select
+            value={targetPlayer}
+            onChange={(e) => {
+              setTargetPlayer(e.target.value);
+              setRequestProperties([]);
+            }}
+          >
+            <option value="">Select player...</option>
+            {otherPlayers.map(p => (
+              <option key={p.id} value={p.id}>{p.token} {p.name}</option>
             ))}
-          </div>
+          </select>
         </div>
 
-        <div style={{ flex: 1 }}>
-          <h5 style={{ fontSize: '0.85rem', marginBottom: 10, color: '#e74c3c' }}>You Want:</h5>
-          <div className="form-group">
-            <label style={{ fontSize: '0.8rem' }}>Money:</label>
-            <input
-              type="number"
-              min="0"
-              max={selectedPlayer?.money || 0}
-              value={requestMoney}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === '') {
-                  setRequestMoney('');
-                } else {
-                  const num = parseInt(value);
-                  if (!isNaN(num) && num >= 0) {
-                    setRequestMoney(value);
+        <div className="trade-content">
+          <div className="trade-side offer">
+            <h5 className="trade-side-title offer">You Offer</h5>
+            <div className="form-group">
+              <label>Money:</label>
+              <input
+                type="number"
+                min="0"
+                max={myPlayer?.money || 0}
+                value={offerMoney}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '') {
+                    setOfferMoney('');
+                  } else {
+                    const num = parseInt(value);
+                    if (!isNaN(num) && num >= 0) {
+                      setOfferMoney(value);
+                    }
                   }
-                }
-              }}
-              style={{ padding: '8px', fontSize: '0.85rem' }}
-            />
-          </div>
-          <div style={{ fontSize: '0.8rem', marginBottom: 5 }}>Properties:</div>
-          <div style={{ maxHeight: 120, overflowY: 'auto' }}>
-            {selectedPlayer?.properties.filter(p => !p.houses).map(prop => (
-              <label 
-                key={prop.index} 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 8, 
-                  padding: '4px 0',
-                  cursor: 'pointer',
-                  fontSize: '0.8rem'
                 }}
-              >
-                <input
-                  type="checkbox"
-                  checked={requestProperties.includes(prop.index)}
-                  onChange={() => toggleRequestProperty(prop.index)}
-                />
-                {prop.name}
-              </label>
-            ))}
-            {!selectedPlayer && (
-              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>
-                Select a player first
-              </p>
-            )}
+              />
+            </div>
+            <div className="trade-list-label">Properties</div>
+            <div className="trade-property-list">
+              {myPlayer?.properties.filter(p => !p.houses).map(prop => (
+                <label key={prop.index} className="trade-property-option">
+                  <input
+                    type="checkbox"
+                    checked={offerProperties.includes(prop.index)}
+                    onChange={() => toggleOfferProperty(prop.index)}
+                  />
+                  <span className="trade-property-name">{prop.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="trade-side request">
+            <h5 className="trade-side-title request">You Want</h5>
+            <div className="form-group">
+              <label>Money:</label>
+              <input
+                type="number"
+                min="0"
+                max={selectedPlayer?.money || 0}
+                value={requestMoney}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '') {
+                    setRequestMoney('');
+                  } else {
+                    const num = parseInt(value);
+                    if (!isNaN(num) && num >= 0) {
+                      setRequestMoney(value);
+                    }
+                  }
+                }}
+              />
+            </div>
+            <div className="trade-list-label">Properties</div>
+            <div className="trade-property-list">
+              {selectedPlayer?.properties.filter(p => !p.houses).map(prop => (
+                <label key={prop.index} className="trade-property-option">
+                  <input
+                    type="checkbox"
+                    checked={requestProperties.includes(prop.index)}
+                    onChange={() => toggleRequestProperty(prop.index)}
+                  />
+                  <span className="trade-property-name">{prop.name}</span>
+                </label>
+              ))}
+              {!selectedPlayer && (
+                <div className="trade-empty">Select a player first</div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, marginTop: 15 }}>
-        <button 
-          className="btn btn-primary" 
+      <div className="action-card-buttons">
+        <button
+          className="btn btn-primary"
           onClick={handleProposeTrade}
           disabled={!targetPlayer}
-          style={{ flex: 1 }}
         >
           Propose Trade
         </button>
-        <button 
-          className="btn btn-secondary" 
+        <button
+          className="btn btn-secondary"
           onClick={onClose}
-          style={{ flex: 1 }}
         >
           Cancel
         </button>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import TradePanel from './TradePanel';
 
 function ActionsPanel({
@@ -18,11 +18,14 @@ function ActionsPanel({
   acceptTrade,
   declineTrade,
   followMode,
-  setFollowMode
+  setFollowMode,
+  animatingPlayer
 }) {
   const [bidAmount, setBidAmount] = useState('');
   const [showTrade, setShowTrade] = useState(false);
   const [currentTradeIndex, setCurrentTradeIndex] = useState(0);
+  const [rollPending, setRollPending] = useState(false);
+  const lastRollRef = useRef(gameState.lastDiceRoll);
 
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
   const canEndTurn = isMyTurn && gameState.diceRolled && !gameState.canRollAgain && !gameState.pendingAction && !gameState.auction;
@@ -34,6 +37,9 @@ function ActionsPanel({
     (myPlayer?.inJail && !gameState.diceRolled)
   );
 
+  const isRollLocked = rollPending || !!animatingPlayer;
+
+
   const handleBid = () => {
     const amount = parseInt(bidAmount);
     if (amount && amount > (gameState.auction?.currentBid || 0)) {
@@ -42,12 +48,31 @@ function ActionsPanel({
     }
   };
 
+  const handleRollDice = () => {
+    if (isRollLocked) return;
+    setRollPending(true);
+    rollDice();
+  };
+
   const quickBid = (increment) => {
     const newBid = (gameState.auction?.currentBid || 0) + increment;
     if (newBid <= myPlayer.money) {
       placeBid(newBid);
     }
   };
+
+  useEffect(() => {
+    if (!isMyTurn) {
+      setRollPending(false);
+      lastRollRef.current = gameState.lastDiceRoll;
+      return;
+    }
+
+    if (gameState.lastDiceRoll !== lastRollRef.current) {
+      setRollPending(false);
+      lastRollRef.current = gameState.lastDiceRoll;
+    }
+  }, [gameState.lastDiceRoll, isMyTurn]);
 
   // Determine what to show based on game state
   const hasPendingTrades = gameState.trades?.filter(t => t.to === myPlayer?.id).length > 0;
@@ -91,7 +116,11 @@ function ActionsPanel({
               ✓ End Turn
             </button>
           ) : canRollDice ? (
-            <button className="btn-action-main roll-dice" onClick={rollDice}>
+            <button
+              className="btn-action-main roll-dice"
+              onClick={handleRollDice}
+              disabled={isRollLocked}
+            >
               🎲 Roll Dice
             </button>
           ) : null}

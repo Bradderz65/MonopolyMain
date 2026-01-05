@@ -162,11 +162,21 @@ io.on('connection', (socket) => {
   });
 
   socket.on('createGame', ({ playerName, gameName, maxPlayers, isPrivate, auctionsEnabled, tokenId, colorId }) => {
-    const game = gameManager.createGame(gameName, maxPlayers, isPrivate, auctionsEnabled || false);
-    const player = game.addPlayer(socket.id, playerName, tokenId, colorId);
-    socket.join(game.id);
-    socket.emit('gameCreated', { gameId: game.id, player, game: game.getState() });
-    io.emit('gamesUpdated', gameManager.getPublicGames());
+    try {
+      const game = gameManager.createGame(gameName, maxPlayers, isPrivate, auctionsEnabled || false);
+      const player = game.addPlayer(socket.id, playerName, tokenId, colorId);
+      
+      if (!player) {
+         socket.emit('error', { message: 'Failed to create game player' });
+         return;
+      }
+
+      socket.join(game.id);
+      socket.emit('gameCreated', { gameId: game.id, player, game: game.getState() });
+      io.emit('gamesUpdated', gameManager.getPublicGames());
+    } catch (error) {
+      socket.emit('error', { message: error.message });
+    }
   });
 
   socket.on('joinGame', ({ gameId, playerName, isBot, botDifficulty, tokenId, colorId }) => {
@@ -183,16 +193,27 @@ io.on('connection', (socket) => {
       socket.emit('error', { message: 'Game is full' });
       return;
     }
-    // Bots automatically get assigned available token/color (pass null)
-    const player = game.addPlayer(socket.id, playerName, isBot ? null : tokenId, isBot ? null : colorId);
-    if (isBot) {
-      player.isBot = true;
-      player.botDifficulty = botDifficulty || 'hard';
+    
+    try {
+      // Bots automatically get assigned available token/color (pass null)
+      const player = game.addPlayer(socket.id, playerName, isBot ? null : tokenId, isBot ? null : colorId);
+      
+      if (!player) {
+         socket.emit('error', { message: 'Failed to join game' });
+         return;
+      }
+
+      if (isBot) {
+        player.isBot = true;
+        player.botDifficulty = botDifficulty || 'hard';
+      }
+      socket.join(game.id);
+      socket.emit('gameJoined', { gameId: game.id, player, game: game.getState() });
+      socket.to(game.id).emit('playerJoined', { player, game: game.getState() });
+      io.emit('gamesUpdated', gameManager.getPublicGames());
+    } catch (error) {
+      socket.emit('error', { message: error.message });
     }
-    socket.join(game.id);
-    socket.emit('gameJoined', { gameId: game.id, player, game: game.getState() });
-    socket.to(game.id).emit('playerJoined', { player, game: game.getState() });
-    io.emit('gamesUpdated', gameManager.getPublicGames());
   });
 
   // Unified rejoin handler - reconnects a bot or human player to an existing game
@@ -303,32 +324,56 @@ io.on('connection', (socket) => {
   });
 
   socket.on('rollDice', ({ gameId }) => {
+    console.log(`[SERVER] rollDice called by ${socket.id} for game ${gameId}`);
     const game = gameManager.getGame(gameId);
-    if (!game || !game.started) return;
+    if (!game || !game.started) {
+      console.log('[SERVER] rollDice rejected: game not found or not started');
+      return;
+    }
     const player = game.getPlayer(socket.id);
     if (!player || game.currentPlayerIndex !== game.players.indexOf(player)) {
+      console.log('[SERVER] rollDice rejected: not player\'s turn');
       socket.emit('error', { message: 'Not your turn' });
       return;
     }
     if (game.diceRolled && !game.canRollAgain) {
+      console.log('[SERVER] rollDice rejected: already rolled');
       socket.emit('error', { message: 'Already rolled' });
       return;
     }
     // Don't allow rolling if there's a pending action or auction
     if (game.pendingAction) {
+      console.log('[SERVER] rollDice rejected: pending action exists');
       socket.emit('error', { message: 'Complete pending action first' });
       return;
     }
     if (game.auction) {
+      console.log('[SERVER] rollDice rejected: auction in progress');
       socket.emit('error', { message: 'Wait for auction to complete' });
       return;
     }
+    const now = Date.now();
+    if (game.rollCooldownPlayerId === player.id && game.rollCooldownUntil && now < game.rollCooldownUntil) {
+      console.log('[SERVER] rollDice rejected: roll cooldown active');
+      socket.emit('error', { message: 'Roll cooldown active' });
+      return;
+    }
+    if (game.rollInProgress) {
+      console.log('[SERVER] rollDice rejected: roll already in progress');
+      socket.emit('error', { message: 'Roll already in progress' });
+      return;
+    }
+    game.rollInProgress = true;
+    game.rollCooldownPlayerId = player.id;
+    game.rollCooldownUntil = now + 1200;
     const result = game.rollDice();
+    console.log(`[SERVER] rollDice SUCCESS for ${player.name}: ${result.die1} + ${result.die2} = ${result.total}`);
     io.to(game.id).emit('diceRolled', { result, game: game.getState() });
 
     // Handle landing on space
     setTimeout(() => {
       const landingResult = game.handleLanding();
+      game.rollInProgress = false;
       io.to(game.id).emit('landingResult', { result: landingResult, game: game.getState() });
     }, 1000);
   });

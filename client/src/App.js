@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
 import Lobby from './components/Lobby';
 import GameBoard from './components/GameBoard';
@@ -23,6 +23,8 @@ function App() {
   // eslint-disable-next-line no-unused-vars
   const [rejoining, setRejoining] = useState(false);
   const [animatingPlayer, setAnimatingPlayer] = useState(null);
+  const gameStateRef = useRef(null);
+  const currentPlayerRef = useRef(null);
 
   const saveSession = (gameId, player) => {
     localStorage.setItem('monopoly_gameId', gameId);
@@ -40,6 +42,14 @@ function App() {
     const playerId = localStorage.getItem('monopoly_playerId');
     return gameId && playerId ? { gameId, playerId } : null;
   };
+
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
+
+  useEffect(() => {
+    currentPlayerRef.current = currentPlayer;
+  }, [currentPlayer]);
 
   useEffect(() => {
     const newSocket = io(SOCKET_URL, {
@@ -131,6 +141,68 @@ function App() {
     let pendingLandingResult = null;
     let isAnimating = false;
 
+    const animatePlayerSteps = (playerId, startPos, steps, direction, options = {}) => new Promise(resolve => {
+      if (steps <= 0) {
+        resolve();
+        return;
+      }
+
+      const { playStepSound = true, playLandingSound = false } = options;
+
+      setAnimatingPlayer({ id: playerId, position: startPos });
+      let currentStep = 0;
+
+      const moveInterval = setInterval(() => {
+        currentStep += 1;
+        const newPos = (startPos + (currentStep * direction) + 40) % 40;
+        setAnimatingPlayer({ id: playerId, position: newPos });
+        if (playStepSound) {
+          sounds.move();
+        }
+
+        if (currentStep >= steps) {
+          clearInterval(moveInterval);
+          setTimeout(() => {
+            setAnimatingPlayer(null);
+            if (playLandingSound) {
+              sounds.diceResult();
+            }
+            resolve();
+          }, 150);
+        }
+      }, 200);
+    });
+
+    const getForcedMoveDetails = (result, currentState, game) => {
+      const movingPlayer = game.players[game.currentPlayerIndex];
+      if (!movingPlayer || !currentState) return null;
+
+      const startPlayer = currentState.players.find(p => p.id === movingPlayer.id);
+      if (!startPlayer) return null;
+
+      const startPos = startPlayer.position;
+      const endPos = movingPlayer.position;
+      const cardAction = result.card?.action;
+
+      if (result.action === 'goToJail' || cardAction === 'jail') {
+        const steps = (startPos - 10 + 40) % 40;
+        return steps > 0 ? { playerId: movingPlayer.id, startPos, steps, direction: -1 } : null;
+      }
+
+      if (cardAction === 'moveBack') {
+        return result.card?.spaces > 0
+          ? { playerId: movingPlayer.id, startPos, steps: result.card.spaces, direction: -1 }
+          : null;
+      }
+
+      if (cardAction === 'move' || cardAction === 'nearestRailroad' || cardAction === 'nearestUtility') {
+        const steps = (endPos - startPos + 40) % 40;
+        return steps > 0 ? { playerId: movingPlayer.id, startPos, steps, direction: 1 } : null;
+      }
+
+      return null;
+    };
+
     const processLandingResult = (result, game) => {
       console.log('[CLIENT] Processing landing result:', result);
       setGameState(prev => {
@@ -141,6 +213,7 @@ function App() {
         }
         return game;
       });
+
       if (result.action === 'paidRent') {
         sounds.payRent();
         setEventToast({ type: 'rent', title: 'Rent Paid!', message: `Paid £${result.rent} rent`, position: result.position });
@@ -168,6 +241,37 @@ function App() {
         setTimeout(() => setCurrentCard(prev => prev ? { ...prev, fading: true } : null), 3000);
         setTimeout(() => setCurrentCard(null), 3500);
       }
+    };
+
+    const handleLandingResult = (result, game) => {
+      const currentState = gameStateRef.current;
+      const forcedMove = getForcedMoveDetails(result, currentState, game);
+      const isCardMove = ['move', 'moveBack', 'nearestRailroad', 'nearestUtility', 'jail'].includes(result.card?.action);
+      const isJailMove = result.action === 'goToJail' || result.card?.action === 'jail';
+
+      if (!forcedMove || isJailMove || isCardMove) {
+        processLandingResult(result, game);
+        return;
+      }
+
+      // Keep the moving player at their original position while animating
+      setGameState(prev => {
+        if (!prev) return prev;
+        const updatedPlayers = game.players.map(p =>
+          p.id === forcedMove.playerId ? { ...p, position: forcedMove.startPos } : p
+        );
+        return { ...game, players: updatedPlayers };
+      });
+
+      isAnimating = true;
+      animatePlayerSteps(forcedMove.playerId, forcedMove.startPos, forcedMove.steps, forcedMove.direction, {
+        playStepSound: false,
+        playLandingSound: true
+      })
+        .then(() => {
+          isAnimating = false;
+          processLandingResult(result, game);
+        });
     };
 
     newSocket.on('diceRolled', ({ result, game }) => {
@@ -221,52 +325,54 @@ function App() {
           setTimeout(() => sounds.doubles(), 200);
         }
 
-        // Start movement animation after dice result shown
-        setTimeout(() => {
-          const steps = result.total;
+      // Start movement animation after dice result shown
+      setTimeout(() => {
+        const steps = result.total;
 
-          if (steps > 0) {
-            setAnimatingPlayer({ id: movingPlayer.id, position: startPos });
-            let currentStep = 0;
-            const moveInterval = setInterval(() => {
-              currentStep++;
-              const newPos = (startPos + currentStep) % 40;
-              setAnimatingPlayer({ id: movingPlayer.id, position: newPos });
-              sounds.move();
+        if (steps > 0) {
+          setAnimatingPlayer({ id: movingPlayer.id, position: startPos });
+          let currentStep = 0;
+          const moveInterval = setInterval(() => {
+            currentStep++;
+            const newPos = (startPos + currentStep) % 40;
+            setAnimatingPlayer({ id: movingPlayer.id, position: newPos });
+            sounds.move();
 
-              if (currentStep >= steps) {
-                clearInterval(moveInterval);
-                // Animation complete - update to final position
-                setTimeout(() => {
-                  setAnimatingPlayer(null);
-                  isAnimating = false;
+            if (currentStep >= steps) {
+              clearInterval(moveInterval);
+              // Animation complete - update to final position
+              setTimeout(() => {
+                setAnimatingPlayer(null);
+                isAnimating = false;
 
-                  // Update player to final position
-                  setGameState(prev => {
-                    if (!prev) return prev;
-                    const updatedPlayers = prev.players.map((p, idx) => {
-                      if (idx === game.currentPlayerIndex) {
-                        return { ...p, position: newPosition };
-                      }
-                      return p;
-                    });
-                    return { ...prev, players: updatedPlayers };
+                // Update player to final position
+                setGameState(prev => {
+                  if (!prev) return prev;
+                  const updatedPlayers = prev.players.map((p, idx) => {
+                    if (idx === game.currentPlayerIndex) {
+                      return { ...p, position: newPosition };
+                    }
+                    return p;
                   });
+                  return { ...prev, players: updatedPlayers };
+                });
 
-                  // Process any pending landing result
-                  if (pendingLandingResult) {
-                    setTimeout(() => {
-                      processLandingResult(pendingLandingResult.result, pendingLandingResult.game);
-                      pendingLandingResult = null;
-                    }, 100);
-                  }
-                }, 150);
-              }
-            }, 200);
-          } else {
-            isAnimating = false;
-          }
-        }, 400);
+                // Process any pending landing result
+                if (pendingLandingResult) {
+                  setTimeout(() => {
+                    handleLandingResult(pendingLandingResult.result, pendingLandingResult.game);
+                    pendingLandingResult = null;
+                  }, 100);
+                }
+
+              }, 150);
+            }
+          }, 200);
+        } else {
+          isAnimating = false;
+        }
+      }, 400);
+
       }, 500);
     });
 
@@ -278,7 +384,7 @@ function App() {
         console.log('[CLIENT] Queued landing result for after animation');
       } else {
         // Process immediately if not animating
-        processLandingResult(result, game);
+        handleLandingResult(result, game);
       }
     });
 

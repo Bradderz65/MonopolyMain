@@ -13,15 +13,52 @@ const COLOR_MAP = {
   'utility': '#999'
 };
 
-function PlayerPanel({ players, currentPlayerIndex, myPlayerId, board }) {
+function PlayerPanel({
+  players,
+  currentPlayerIndex,
+  myPlayerId,
+  board,
+  ownerDotScale,
+  canDecreaseOwnerDotScale,
+  canIncreaseOwnerDotScale,
+  onDecreaseOwnerDotScale,
+  onIncreaseOwnerDotScale
+}) {
   const getPropertyColor = (prop) => {
     if (prop.type === 'railroad') return COLOR_MAP.railroad;
     if (prop.type === 'utility') return COLOR_MAP.utility;
     return COLOR_MAP[prop.color] || '#666';
   };
 
+  const showOwnerDotControls = typeof onDecreaseOwnerDotScale === 'function' && typeof onIncreaseOwnerDotScale === 'function';
+  const ownerDotLabel = ownerDotScale === 0 ? 'Off' : `${Math.round((ownerDotScale || 1) * 100)}%`;
+
   return (
     <div className="players-panel">
+      {showOwnerDotControls && (
+        <div className="owner-dot-controls">
+          <span className="owner-dot-label">Owner dots</span>
+          <div className="owner-dot-buttons">
+            <button
+              className="btn btn-secondary btn-small owner-dot-button"
+              onClick={onDecreaseOwnerDotScale}
+              disabled={!canDecreaseOwnerDotScale}
+              aria-label="Decrease owner dot size"
+            >
+              -
+            </button>
+            <button
+              className="btn btn-secondary btn-small owner-dot-button"
+              onClick={onIncreaseOwnerDotScale}
+              disabled={!canIncreaseOwnerDotScale}
+              aria-label="Increase owner dot size"
+            >
+              +
+            </button>
+          </div>
+          <span className="owner-dot-size">{ownerDotLabel}</span>
+        </div>
+      )}
       {players.map((player, index) => (
         <div
           key={player.id}

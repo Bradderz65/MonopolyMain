@@ -105,20 +105,22 @@ function PropertiesPanel({
                 {property.type === 'property' && !property.mortgaged && (
                   <>
                     <button
-                      className="btn btn-secondary btn-small"
+                      className="btn btn-secondary btn-small build-house-btn"
                       onClick={() => buildHouse(property.index)}
                       disabled={!canBuildOnProperty(property)}
                       title={`Build house ($${property.houseCost})`}
                     >
-                      +🏠
+                      <span className="house-action-symbol">+</span>
+                      <span className="house-action-icon" aria-hidden="true">🏠</span>
                     </button>
                     <button
-                      className="btn btn-secondary btn-small"
+                      className="btn btn-secondary btn-small sell-house-btn"
                       onClick={() => sellHouse(property.index)}
                       disabled={!canSellHouse(property)}
                       title={`Sell house ($${property.houseCost / 2})`}
                     >
-                      -🏠
+                      <span className="house-action-symbol">-</span>
+                      <span className="house-action-icon" aria-hidden="true">🏠</span>
                     </button>
                   </>
                 )}

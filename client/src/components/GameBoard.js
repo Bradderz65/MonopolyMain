@@ -18,6 +18,8 @@ const PROPERTY_COLORS = {
   'dark-blue': '#00008B'
 };
 
+const OWNER_DOT_SCALES = [0, 0.5, 0.75, 1];
+
 function getPropertyColor(property) {
   if (!property) return '#4ecdc4';
   if (property.type === 'railroad') return '#555';
@@ -62,6 +64,8 @@ function GameBoard({
   const [propertyPopupDismissed, setPropertyPopupDismissed] = useState(false);
   const [followMode, setFollowMode] = useState(false);
   const [logTabVisible, setLogTabVisible] = useState(false);
+  const [ownerDotScaleIndex, setOwnerDotScaleIndex] = useState(OWNER_DOT_SCALES.length - 1);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   // Swipe gesture refs
   const touchStartX = useRef(null);
@@ -83,6 +87,18 @@ function GameBoard({
 
   // Triple tap detection (within 500ms)
   const TRIPLE_TAP_TIMEOUT = 500;
+
+  const ownerDotScale = OWNER_DOT_SCALES[ownerDotScaleIndex];
+  const canDecreaseOwnerDotScale = ownerDotScaleIndex > 0;
+  const canIncreaseOwnerDotScale = ownerDotScaleIndex < OWNER_DOT_SCALES.length - 1;
+
+  const decreaseOwnerDotScale = () => {
+    setOwnerDotScaleIndex(index => Math.max(0, index - 1));
+  };
+
+  const increaseOwnerDotScale = () => {
+    setOwnerDotScaleIndex(index => Math.min(OWNER_DOT_SCALES.length - 1, index + 1));
+  };
 
   const handleTripleTap = () => {
     // Clear existing timer
@@ -259,16 +275,45 @@ function GameBoard({
           <div className="game-code-display">{gameState.id}</div>
           <p>Share this code with friends to join!</p>
 
-          <div className="players-waiting">
-            <h3>Players ({gameState.players.length}/{gameState.maxPlayers || 4})</h3>
-            {gameState.players.map((player, idx) => (
-              <div key={player.id} className="player-badge" style={{ borderColor: player.color }}>
-                <span className="player-token">{player.token}</span>
-                <span className="player-name">{player.name}</span>
-                {player.isHost && <span className="host-badge">HOST</span>}
+            <div className="players-waiting">
+              <h3>Players ({gameState.players.length}/{gameState.maxPlayers || 4})</h3>
+              <div className="players-waiting-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                {gameState.players.map((player, idx) => (
+                  <div 
+                    key={player.id} 
+                    className="player-chip"
+                    style={{
+                      '--player-color': player.color,
+                      borderLeft: `3px solid ${player.color}`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 12px',
+                      background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, color-mix(in srgb, var(--player-color, #4ecdc4) 15%, transparent) 100%)',
+                      borderRadius: '8px',
+                      fontSize: '1rem',
+                      fontWeight: '500',
+                      color: 'white',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    <span className="player-token">{player.token}</span>
+                    <span className="player-name">{player.name}</span>
+                    {player.isHost && (
+                      <span className="host-badge" style={{ 
+                        fontSize: '0.65rem', 
+                        background: '#f39c12', 
+                        color: '#000', 
+                        padding: '2px 6px', 
+                        borderRadius: '4px',
+                        marginLeft: '4px',
+                        fontWeight: '700'
+                      }}>HOST</span>
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
 
           <div className="waiting-actions">
             {myPlayer?.isHost && (
@@ -397,6 +442,34 @@ function GameBoard({
         </div>
       )}
 
+      {/* Exit confirmation */}
+      {showExitConfirm && (
+        <div className="property-modal-overlay" onClick={() => setShowExitConfirm(false)}>
+          <div className="property-modal" onClick={e => e.stopPropagation()}>
+            <div className="property-modal-header">
+              <div className="property-modal-name">Leave Game?</div>
+            </div>
+            <div className="property-modal-body">
+              <div className="property-modal-row" style={{ justifyContent: 'center', textAlign: 'center' }}>
+                <span>Are you sure you want to exit this game?</span>
+              </div>
+            </div>
+            <div className="property-modal-footer">
+              <button className="btn btn-secondary" onClick={() => setShowExitConfirm(false)}>Cancel</button>
+              <button
+                className="btn btn-danger"
+                onClick={() => {
+                  setShowExitConfirm(false);
+                  leaveGame();
+                }}
+              >
+                Exit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Show toast for non-rent events (rent is shown on the board) */}
       {eventToast && eventToast.type !== 'rent' && (
         <div className={`event-toast ${eventToast.type}`}>
@@ -408,7 +481,7 @@ function GameBoard({
       <div className="game-header-minimal">
         {/* Left: Leave button and game title */}
         <div className="header-left">
-          <button className="btn-leave" onClick={leaveGame}>✕</button>
+          <button className="btn-leave" onClick={() => setShowExitConfirm(true)}>✕</button>
           <span className="game-title">{gameState.name}</span>
         </div>
 
@@ -448,17 +521,21 @@ function GameBoard({
 
       <div className="game-main">
         <div className={`board-container ${followMode ? 'follow-mode' : ''}`}>
-          <Board
-            board={gameState.board}
-            players={gameState.players}
-            onSpaceClick={setSelectedProperty}
-            animatingPlayer={animatingPlayer}
-            followMode={followMode}
-            followPosition={followPosition}
-            eventToast={eventToast}
-            freeParking={gameState.freeParking}
-            currentCard={currentCard}
-          />
+            <Board
+              board={gameState.board}
+              players={gameState.players}
+              onSpaceClick={setSelectedProperty}
+              animatingPlayer={animatingPlayer}
+              followMode={followMode}
+              followPosition={followPosition}
+              eventToast={eventToast}
+              freeParking={gameState.freeParking}
+              housesAvailable={gameState.housesAvailable}
+              hotelsAvailable={gameState.hotelsAvailable}
+              currentCard={currentCard}
+              ownerDotScale={ownerDotScale}
+            />
+
         </div>
 
         <div className="sidebar">
@@ -523,28 +600,35 @@ function GameBoard({
                 currentPlayerIndex={gameState.currentPlayerIndex}
                 myPlayerId={currentPlayer?.id}
                 board={gameState.board}
+                ownerDotScale={ownerDotScale}
+                canDecreaseOwnerDotScale={canDecreaseOwnerDotScale}
+                canIncreaseOwnerDotScale={canIncreaseOwnerDotScale}
+                onDecreaseOwnerDotScale={decreaseOwnerDotScale}
+                onIncreaseOwnerDotScale={increaseOwnerDotScale}
               />
             )}
             {activeTab === 'actions' && (
-              <ActionsPanel
-                gameState={gameState}
-                myPlayer={myPlayer}
-                isMyTurn={isMyTurn}
-                rollDice={rollDice}
-                buyProperty={buyProperty}
-                declineProperty={declineProperty}
-                placeBid={placeBid}
-                passBid={passBid}
-                payJailFine={payJailFine}
-                useJailCard={useJailCard}
-                endTurn={endTurn}
-                declareBankruptcy={declareBankruptcy}
-                proposeTrade={proposeTrade}
-                acceptTrade={acceptTrade}
-                declineTrade={declineTrade}
-                followMode={followMode}
-                setFollowMode={setFollowMode}
-              />
+                <ActionsPanel
+                  gameState={gameState}
+                  myPlayer={myPlayer}
+                  isMyTurn={isMyTurn}
+                  rollDice={rollDice}
+                  buyProperty={buyProperty}
+                  declineProperty={declineProperty}
+                  placeBid={placeBid}
+                  passBid={passBid}
+                  payJailFine={payJailFine}
+                  useJailCard={useJailCard}
+                  endTurn={endTurn}
+                  declareBankruptcy={declareBankruptcy}
+                  proposeTrade={proposeTrade}
+                  acceptTrade={acceptTrade}
+                  declineTrade={declineTrade}
+                  followMode={followMode}
+                  setFollowMode={setFollowMode}
+                  animatingPlayer={animatingPlayer}
+                />
+
             )}
             {activeTab === 'properties' && (
               <PropertiesPanel

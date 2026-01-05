@@ -60,7 +60,7 @@ const getGridPosition = (spaceIndex) => {
   return { gridColumn: 6, gridRow: 6 };
 };
 
-function Board({ board, players, onSpaceClick, animatingPlayer, followMode, followPosition, eventToast, freeParking, currentCard, onCardDeckClick }) {
+function Board({ board, players, onSpaceClick, animatingPlayer, followMode, followPosition, eventToast, freeParking, housesAvailable, hotelsAvailable, currentCard, onCardDeckClick, ownerDotScale = 1 }) {
   const getPlayersOnSpace = (spaceIndex) => {
     return players.filter(p => {
       if (p.bankrupt) return false;
@@ -95,6 +95,11 @@ function Board({ board, players, onSpaceClick, animatingPlayer, followMode, foll
     const playersOnSpace = getPlayersOnSpace(spaceIndex);
     const isCorner = [0, 10, 20, 30].includes(spaceIndex);
     const owner = space.owner ? players.find(p => p.id === space.owner) : null;
+    const isOwnableSpace = ['property', 'railroad', 'utility'].includes(space.type);
+    const shouldShrinkPlayers = isOwnableSpace && playersOnSpace.length > 1;
+    const playerScale = shouldShrinkPlayers
+      ? Math.max(0.6, 1 - (playersOnSpace.length - 1) * 0.12)
+      : 1;
 
     const getGridPosition = () => {
       if (position === 'bottom') {
@@ -129,16 +134,36 @@ function Board({ board, players, onSpaceClick, animatingPlayer, followMode, foll
         return <div className="space-name">JAIL</div>;
       }
       if (space.type === 'free-parking') {
-        return <div className="space-name">FREE PARKING</div>;
+        return (
+          <div className="space-name space-icon-stack">
+            <span className="space-icon-emoji" aria-hidden="true">🅿️</span>
+            <span className="space-icon-label">Free Parking</span>
+          </div>
+        );
       }
       if (space.type === 'go-to-jail') {
-        return <div className="space-name">GO TO JAIL</div>;
+        return (
+          <div className="space-name space-icon-stack">
+            <span className="space-icon-label">GO TO JAIL</span>
+            <span className="space-icon-emoji go-to-jail-hand" aria-hidden="true">👈</span>
+          </div>
+        );
       }
       if (space.type === 'chance') {
-        return <div className="space-name space-icon">❓</div>;
+        return (
+          <div className="space-name space-icon-stack">
+            <span className="space-icon-emoji" aria-hidden="true">❓</span>
+            <span className="space-icon-label">Chance</span>
+          </div>
+        );
       }
       if (space.type === 'community-chest') {
-        return <div className="space-name space-icon">📦</div>;
+        return (
+          <div className="space-name space-icon-stack">
+            <span className="space-icon-emoji" aria-hidden="true">📦</span>
+            <span className="space-icon-label community-chest-label">Community Chest</span>
+          </div>
+        );
       }
       if (space.type === 'tax') {
         return (
@@ -199,7 +224,7 @@ function Board({ board, players, onSpaceClick, animatingPlayer, followMode, foll
     return (
       <div
         key={spaceIndex}
-        className={`board-space ${isCorner ? 'corner' : ''}`}
+        className={`board-space ${position} ${isCorner ? 'corner' : ''}`}
         style={getGridPosition()}
         onClick={() => onSpaceClick(spaceIndex)}
       >
@@ -210,16 +235,17 @@ function Board({ board, players, onSpaceClick, animatingPlayer, followMode, foll
           <div
             className="space-owner-indicator"
             style={{
-              borderRightColor: owner.color,
-              '--owner-color': owner.color
+              '--owner-color': owner.color,
+              '--owner-dot-scale': ownerDotScale
             }}
             title={`Owned by ${owner.name}`}
-          >
-            <span className="owner-dot" style={{ background: owner.color }}></span>
-          </div>
+          />
         )}
         {playersOnSpace.length > 0 && (
-          <div className={`space-players ${playersOnSpace.length > 1 ? 'crowded' : ''}`}>
+          <div
+            className={`space-players ${shouldShrinkPlayers ? 'crowded' : ''}`}
+            style={{ '--player-piece-scale': playerScale }}
+          >
             {playersOnSpace.map(player => (
               <span key={player.id} className="player-piece" title={player.name}>
                 {player.token}
@@ -316,8 +342,8 @@ function Board({ board, players, onSpaceClick, animatingPlayer, followMode, foll
         </div>
 
         <div className="center-info">
-          <p>🏠 Houses: {board.housesAvailable || 32}</p>
-          <p>🏨 Hotels: {board.hotelsAvailable || 12}</p>
+          <p>🏠 Houses Left: {housesAvailable ?? 32}</p>
+          <p>🏨 Hotels Left: {hotelsAvailable ?? 12}</p>
           <p className="free-parking-display">
             🅿️ Free Parking: <span className="free-parking-amount">£{freeParking || 0}</span>
           </p>
