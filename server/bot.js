@@ -394,6 +394,18 @@ class MonopolyBot {
             this.updateGameState(game);
         });
 
+        this.socket.on('playerDisconnected', ({ game }) => {
+            this.updateGameState(game);
+        });
+
+        this.socket.on('playerReconnected', ({ game }) => {
+            this.updateGameState(game);
+            // Resume play if we were paused
+            if (this.isMyTurn) {
+                this.checkAndTakeTurn();
+            }
+        });
+
         this.socket.on('gameOver', ({ game }) => {
             console.log(`[BOT ${this.botName}] Game over!`);
             this.stopTurnChecker();
@@ -1304,6 +1316,11 @@ class MonopolyBot {
     }
 
     handleAuction(auction) {
+        // Verify auction is still active in latest state
+        if (!this.gameState.auction || (auction && this.gameState.auction.property.index !== auction.property.index)) {
+            return;
+        }
+
         if (!auction || !this.myPlayer) return;
         if (auction.passedPlayers?.includes(this.myPlayer.id)) return;
 
@@ -1333,13 +1350,19 @@ class MonopolyBot {
             console.log(`[BOT ${this.botName}] Bidding £${bidAmount} on ${property.name} (max: £${maxBid}) in ${Math.round(bidDelay / 1000)}s...`);
 
             setTimeout(() => {
-                this.socket.emit('auctionBid', { gameId: this.gameId, amount: bidAmount });
+                // Verify auction still active before emitting
+                if (this.gameState.auction && this.gameState.auction.property.index === property.index) {
+                    this.socket.emit('auctionBid', { gameId: this.gameId, amount: bidAmount });
+                }
             }, bidDelay);
         } else {
             const passDelay = this.getRandomDelay('auctionPass');
             console.log(`[BOT ${this.botName}] Passing on ${property.name} (min: £${minBid}, max: £${maxBid})`);
             setTimeout(() => {
-                this.socket.emit('auctionPass', { gameId: this.gameId });
+                // Verify auction still active before emitting
+                if (this.gameState.auction && this.gameState.auction.property.index === property.index) {
+                    this.socket.emit('auctionPass', { gameId: this.gameId });
+                }
             }, passDelay);
         }
     }
@@ -1401,6 +1424,13 @@ class MonopolyBot {
 
     checkAndTakeTurn() {
         if (!this.isMyTurn || !this.gameState?.started || this.actionInProgress) {
+            return;
+        }
+
+        // Pause if no humans are connected
+        const humansConnected = this.gameState.players.some(p => !p.isBot && !p.disconnected && !p.bankrupt);
+        if (!humansConnected) {
+            console.log(`[BOT ${this.botName}] No active humans - pausing turn`);
             return;
         }
 

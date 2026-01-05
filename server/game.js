@@ -647,6 +647,15 @@ class Game {
     this.auction.highestBidder = player.id;
     this.addLog(`${player.name} bid £${amount}`);
 
+    // If only one bidder left (the one who just bid), auto-complete the auction
+    const remainingBidders = this.auction.participants.filter(
+      id => !this.auction.passedPlayers.includes(id)
+    );
+    
+    if (remainingBidders.length <= 1) {
+      this.completeAuction();
+    }
+
     return { success: true };
   }
 

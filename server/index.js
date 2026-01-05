@@ -611,7 +611,13 @@ io.on('connection', (socket) => {
     const result = game.removePlayer(socket.id);
     socket.leave(game.id);
 
-    if (game.players.length === 0 || game.players.every(p => p.bankrupt)) {
+    // Check if any active humans remain (not bots, not bankrupt)
+    const activeHumans = game.players.filter(p => !p.isBot && !p.bankrupt);
+
+    if (activeHumans.length === 0) {
+      console.log(`[SERVER] No humans left in game ${gameId} - ending game`);
+      gameManager.removeGame(gameId);
+    } else if (game.players.length === 0 || game.players.every(p => p.bankrupt)) {
       gameManager.removeGame(gameId);
     } else {
       // Notify all players about the removal

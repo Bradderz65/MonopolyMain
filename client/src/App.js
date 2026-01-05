@@ -336,6 +336,14 @@ function App() {
             currentStep++;
             const newPos = (startPos + currentStep) % 40;
             setAnimatingPlayer({ id: movingPlayer.id, position: newPos });
+            
+            // Check for passing GO
+            if (newPos === 0) {
+              sounds.collectMoney();
+              setEventToast({ type: 'money', title: 'Passed GO!', message: 'Collected £200' });
+              setTimeout(() => setEventToast(null), 3000);
+            }
+
             sounds.move();
 
             if (currentStep >= steps) {
