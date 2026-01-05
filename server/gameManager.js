@@ -96,8 +96,9 @@ class GameManager {
   }
 
   createGame(name, maxPlayers = 4, isPrivate = false, auctionsEnabled = false) {
+    const validMaxPlayers = (maxPlayers && !isNaN(maxPlayers)) ? parseInt(maxPlayers) : 4;
     const id = uuidv4().substring(0, 8).toUpperCase();
-    const game = new Game(id, name, maxPlayers, isPrivate, auctionsEnabled);
+    const game = new Game(id, name, validMaxPlayers, isPrivate, auctionsEnabled);
     this.games.set(id, game);
     return game;
   }

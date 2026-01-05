@@ -31,7 +31,7 @@ function Lobby({ playerName, setPlayerName, games, createGame, joinGame, onReset
   const [joinCode, setJoinCode] = useState('');
   const [resetting, setResetting] = useState(false);
   const [showJoinByCode, setShowJoinByCode] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   
   // Character selection state
   const [selectedToken, setSelectedToken] = useState('car');
@@ -72,7 +72,15 @@ function Lobby({ playerName, setPlayerName, games, createGame, joinGame, onReset
       alert('Please enter your name first');
       return;
     }
-    createGame(gameName || `${playerName}'s Game`, maxPlayers, isPrivate, auctionsEnabled, selectedToken, selectedColor);
+    if (!gameName) {
+      setGameName(`${playerName}'s Game`);
+    }
+    setShowCreateModal(true);
+  };
+
+  const handleConfirmCreate = () => {
+    createGame(gameName, maxPlayers, isPrivate, auctionsEnabled, selectedToken, selectedColor);
+    setShowCreateModal(false);
   };
 
   const handleJoinGame = (gameId) => {
@@ -235,66 +243,72 @@ function Lobby({ playerName, setPlayerName, games, createGame, joinGame, onReset
           </form>
         )}
 
-        {/* Settings Toggle */}
-        <button
-          className="btn-settings-toggle"
-          onClick={() => setShowSettings(!showSettings)}
-        >
-          ⚙️ Game Settings {showSettings ? '▲' : '▼'}
-        </button>
-
-        {/* Game Settings - Collapsible */}
-        {showSettings && (
-          <div className="lobby-settings">
-            <div className="setting-row">
-              <label>Game Name</label>
-              <input
-                type="text"
-                placeholder="My Game"
-                value={gameName}
-                onChange={(e) => setGameName(e.target.value)}
-                maxLength={30}
-              />
-            </div>
-
-            <div className="setting-row">
-              <label>Max Players</label>
-              <div className="player-count-buttons">
-                {[2, 3, 4, 5, 6, 7, 8].map((num) => (
-                  <button
-                    key={num}
-                    type="button"
-                    className={`count-btn-minimal ${maxPlayers === num ? 'selected' : ''}`}
-                    onClick={() => setMaxPlayers(num)}
-                  >
-                    {num}
-                  </button>
-                ))}
+        {/* Create Game Modal */}
+        {showCreateModal && (
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h2>Create Game</h2>
+                <button className="btn-close" onClick={() => setShowCreateModal(false)}>×</button>
               </div>
-            </div>
+              
+              <div className="modal-body">
+                <div className="setting-row">
+                  <label>Game Name</label>
+                  <input
+                    type="text"
+                    value={gameName}
+                    onChange={(e) => setGameName(e.target.value)}
+                    maxLength={30}
+                    autoFocus
+                  />
+                </div>
 
-            <div className="setting-row toggle-row">
-              <label className="toggle-label-minimal">
-                <input
-                  type="checkbox"
-                  checked={isPrivate}
-                  onChange={(e) => setIsPrivate(e.target.checked)}
-                />
-                <span className="toggle-track"></span>
-                🔒 Private Game
-              </label>
-            </div>
+                <div className="setting-row">
+                  <label>Max Players</label>
+                  <div className="player-count-buttons">
+                    {[2, 3, 4, 5, 6, 7, 8].map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        className={`count-btn-minimal ${maxPlayers === num ? 'selected' : ''}`}
+                        onClick={() => setMaxPlayers(num)}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            <div className="setting-row toggle-row">
-              <label className="toggle-label-minimal">
-                <input
-                  type="checkbox"
-                  checked={auctionsEnabled}
-                  onChange={(e) => setAuctionsEnabled(e.target.checked)}
-                />
-                <span className="toggle-track"></span>
-                🔨 Enable Auctions
-              </label>
+                <div className="setting-row toggle-row">
+                  <label className="toggle-label-minimal">
+                    <input
+                      type="checkbox"
+                      checked={isPrivate}
+                      onChange={(e) => setIsPrivate(e.target.checked)}
+                    />
+                    <span className="toggle-track"></span>
+                    🔒 Private Game
+                  </label>
+                </div>
+
+                <div className="setting-row toggle-row">
+                  <label className="toggle-label-minimal">
+                    <input
+                      type="checkbox"
+                      checked={auctionsEnabled}
+                      onChange={(e) => setAuctionsEnabled(e.target.checked)}
+                    />
+                    <span className="toggle-track"></span>
+                    🔨 Enable Auctions
+                  </label>
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
+                <button className="btn btn-primary" onClick={handleConfirmCreate}>Create Game</button>
+              </div>
             </div>
           </div>
         )}

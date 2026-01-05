@@ -29,7 +29,8 @@ class Game {
   constructor(id, name, maxPlayers = 4, isPrivate = false, auctionsEnabled = false) {
     this.id = id;
     this.name = name;
-    this.maxPlayers = Math.min(maxPlayers, 8);
+    const validMax = (maxPlayers && !isNaN(maxPlayers)) ? parseInt(maxPlayers) : 4;
+    this.maxPlayers = Math.max(2, Math.min(validMax, 8));
     this.isPrivate = isPrivate;
     this.auctionsEnabled = auctionsEnabled;
     this.players = [];
@@ -1000,6 +1001,7 @@ class Game {
     return {
       id: this.id,
       name: this.name,
+      maxPlayers: this.maxPlayers,
       started: this.started,
       players: this.players.map(p => ({
         ...p,
