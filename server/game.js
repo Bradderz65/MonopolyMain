@@ -1,6 +1,8 @@
 const { v4: uuidv4 } = require('uuid');
 const { BOARD_SPACES, CHANCE_CARDS, COMMUNITY_CHEST_CARDS } = require('./boardData');
 
+const AUCTION_BID_DELAY_MS = 1000;
+
 // Available player colors with names
 const PLAYER_COLORS = [
   { id: 'red', hex: '#e74c3c', name: 'Red' },
@@ -625,6 +627,8 @@ class Game {
       propertyIndex: this.board.indexOf(property),
       currentBid: 0,
       minimumBid: 10, // Minimum starting bid
+      minBidDelayMs: AUCTION_BID_DELAY_MS,
+      lastBidAt: 0,
       highestBidder: null,
       participants: allParticipants,
       passedPlayers: [currentPlayerId], // Current player already passed by declining to buy
@@ -637,6 +641,15 @@ class Game {
   placeBid(player, amount) {
     if (!this.auction) return { success: false };
     if (!this.auction.participants.includes(player.id)) return { success: false };
+    if (this.auction.passedPlayers.includes(player.id)) {
+      return { success: false, message: 'Player already passed' };
+    }
+
+    const now = Date.now();
+    const minDelayMs = this.auction.minBidDelayMs || 0;
+    if (this.auction.lastBidAt && (now - this.auction.lastBidAt) < minDelayMs) {
+      return { success: false, message: 'Bid too soon after last bid' };
+    }
 
     // Check minimum bid
     const minRequired = Math.max(this.auction.minimumBid || 10, this.auction.currentBid + 1);
@@ -644,6 +657,7 @@ class Game {
     if (amount > player.money) return { success: false, message: 'Not enough money' };
 
     this.auction.currentBid = amount;
+    this.auction.lastBidAt = now;
     this.auction.highestBidder = player.id;
     this.addLog(`${player.name} bid £${amount}`);
 
@@ -689,6 +703,7 @@ class Game {
     winner.properties.push(this.auction.propertyIndex);
 
     this.addLog(`${winner.name} won the auction for ${property.name} at £${this.auction.currentBid}`);
+    console.log(`[SERVER] Auction won by ${winner.name} for ${property.name} at £${this.auction.currentBid}`);
     this.auction = null;
   }
 

@@ -143,6 +143,8 @@ class MonopolyBot {
         this.lastTradeTime = 0;
         this.declinedTrades = new Map();
         this.receivedTradeHistory = new Map();
+        this.auctionActionTimer = null;
+        this.auctionActionToken = 0;
 
         // Load difficulty-specific configuration
         const difficultyConfig = DIFFICULTY_CONFIGS[this.difficulty];
@@ -314,17 +316,22 @@ class MonopolyBot {
 
         this.socket.on('auctionStarted', ({ auction, game }) => {
             this.updateGameState(game);
-            const delay = this.getRandomDelay('auctionBid');
-            setTimeout(() => this.handleAuction(auction), delay);
+            if (auction) {
+                const delay = this.getRandomDelay('auctionBid');
+                this.scheduleAuctionTimer(() => this.handleAuction(this.gameState.auction), delay, auction.property.index);
+            }
         });
 
         this.socket.on('auctionUpdate', ({ auction, game }) => {
             this.updateGameState(game);
             if (auction) {
                 const delay = this.getRandomDelay('auctionBid');
-                setTimeout(() => this.handleAuction(auction), delay);
-            } else if (this.isMyTurn) {
-                this.scheduleEndTurn(this.getRandomDelay('endTurn'));
+                this.scheduleAuctionTimer(() => this.handleAuction(this.gameState.auction), delay, auction.property.index);
+            } else {
+                this.clearAuctionTimer();
+                if (this.isMyTurn) {
+                    this.scheduleEndTurn(this.getRandomDelay('endTurn'));
+                }
             }
         });
 
@@ -1324,6 +1331,19 @@ class MonopolyBot {
         if (!auction || !this.myPlayer) return;
         if (auction.passedPlayers?.includes(this.myPlayer.id)) return;
 
+        const minDelayMs = auction.minBidDelayMs || 0;
+        const lastBidAt = auction.lastBidAt || 0;
+        const sinceLastBid = Date.now() - lastBidAt;
+        if (lastBidAt && sinceLastBid < minDelayMs) {
+            const waitMs = minDelayMs - sinceLastBid;
+            this.scheduleAuctionTimer(
+                () => this.handleAuction(this.gameState.auction),
+                waitMs,
+                auction.property.index
+            );
+            return;
+        }
+
         const property = auction.property;
         const currentBid = auction.currentBid || 0;
         const minBid = Math.max(auction.minimumBid || 10, currentBid + 1);
@@ -1349,22 +1369,38 @@ class MonopolyBot {
             const bidDelay = this.getRandomDelay('auctionBid');
             console.log(`[BOT ${this.botName}] Bidding £${bidAmount} on ${property.name} (max: £${maxBid}) in ${Math.round(bidDelay / 1000)}s...`);
 
-            setTimeout(() => {
-                // Verify auction still active before emitting
-                if (this.gameState.auction && this.gameState.auction.property.index === property.index) {
-                    this.socket.emit('auctionBid', { gameId: this.gameId, amount: bidAmount });
-                }
-            }, bidDelay);
+            this.scheduleAuctionTimer(
+                () => this.socket.emit('auctionBid', { gameId: this.gameId, amount: bidAmount }),
+                bidDelay,
+                property.index
+            );
         } else {
             const passDelay = this.getRandomDelay('auctionPass');
             console.log(`[BOT ${this.botName}] Passing on ${property.name} (min: £${minBid}, max: £${maxBid})`);
-            setTimeout(() => {
-                // Verify auction still active before emitting
-                if (this.gameState.auction && this.gameState.auction.property.index === property.index) {
-                    this.socket.emit('auctionPass', { gameId: this.gameId });
-                }
-            }, passDelay);
+            this.scheduleAuctionTimer(
+                () => this.socket.emit('auctionPass', { gameId: this.gameId }),
+                passDelay,
+                property.index
+            );
         }
+    }
+
+    clearAuctionTimer() {
+        if (this.auctionActionTimer) {
+            clearTimeout(this.auctionActionTimer);
+            this.auctionActionTimer = null;
+        }
+    }
+
+    scheduleAuctionTimer(action, delayMs, propertyIndex) {
+        this.clearAuctionTimer();
+        const token = ++this.auctionActionToken;
+        this.auctionActionTimer = setTimeout(() => {
+            if (token !== this.auctionActionToken) return;
+            if (!this.gameState?.auction || this.gameState.auction.property.index !== propertyIndex) return;
+            if (this.gameState.auction.passedPlayers?.includes(this.myPlayer?.id)) return;
+            action();
+        }, delayMs);
     }
 
     // ═══════════════════════════════════════════════════════════════════════

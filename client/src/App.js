@@ -412,6 +412,25 @@ function App() {
       if (auction?.highestBidder) sounds.bid();
     });
 
+    newSocket.on('auctionEnded', ({ winner, property, amount }) => {
+      const propertyName = property?.name || 'property';
+      if (winner) {
+        sounds.auctionWin();
+        setEventToast({
+          type: 'auction',
+          title: 'Auction Won',
+          message: `${winner.name} won ${propertyName} for £${amount}`
+        });
+      } else {
+        setEventToast({
+          type: 'auction',
+          title: 'Auction Ended',
+          message: `No one bought ${propertyName}`
+        });
+      }
+      setTimeout(() => setEventToast(null), 3000);
+    });
+
     newSocket.on('houseBuilt', ({ result, game }) => {
       setGameState(game);
       sounds.buildHouse();

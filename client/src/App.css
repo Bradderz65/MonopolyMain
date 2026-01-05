@@ -2696,10 +2696,12 @@
 .custom-bid {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .custom-bid input {
-  flex: 1;
+  flex: 1 1 160px;
+  min-width: 0;
   padding: 10px 12px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -2715,6 +2717,31 @@
 
 .custom-bid input::placeholder {
   color: rgba(255, 255, 255, 0.3);
+}
+
+.custom-bid .btn-action.bid {
+  flex: 0 1 120px;
+  max-width: 100%;
+}
+
+@media (max-width: 600px) {
+  .custom-bid {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .custom-bid input {
+    width: min(180px, 100%);
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+
+  .custom-bid .btn-action.bid {
+    width: auto;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    line-height: 1.2;
+  }
 }
 
 .passed-message {
@@ -5014,6 +5041,10 @@
 
 .event-toast.money {
   border-color: #2ecc71;
+}
+
+.event-toast.auction {
+  border-color: #f1c40f;
 }
 
 .event-toast-title {

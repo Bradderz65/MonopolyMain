@@ -424,8 +424,16 @@ io.on('connection', (socket) => {
     if (!game || !game.auction) return;
     const player = game.getPlayer(socket.id);
     if (!player) return;
+    const beforeAuction = game.auction;
     const result = game.placeBid(player, amount);
     io.to(game.id).emit('auctionUpdate', { auction: game.auction, game: game.getState() });
+    if (result.success && beforeAuction && !game.auction) {
+      io.to(game.id).emit('auctionEnded', {
+        winner: { id: player.id, name: player.name },
+        property: beforeAuction.property,
+        amount: amount
+      });
+    }
   });
 
   socket.on('auctionPass', ({ gameId }) => {
@@ -433,8 +441,25 @@ io.on('connection', (socket) => {
     if (!game || !game.auction) return;
     const player = game.getPlayer(socket.id);
     if (!player) return;
+    const beforeAuction = game.auction;
     game.passBid(player);
     io.to(game.id).emit('auctionUpdate', { auction: game.auction, game: game.getState() });
+    if (beforeAuction && !game.auction) {
+      if (beforeAuction.highestBidder) {
+        const winner = game.players.find(p => p.id === beforeAuction.highestBidder);
+        io.to(game.id).emit('auctionEnded', {
+          winner: winner ? { id: winner.id, name: winner.name } : null,
+          property: beforeAuction.property,
+          amount: beforeAuction.currentBid
+        });
+      } else {
+        io.to(game.id).emit('auctionEnded', {
+          winner: null,
+          property: beforeAuction.property,
+          amount: 0
+        });
+      }
+    }
   });
 
   socket.on('declineProperty', ({ gameId }) => {
@@ -442,6 +467,11 @@ io.on('connection', (socket) => {
     if (!game || !game.started) return;
     const player = game.getPlayer(socket.id);
     if (!player || game.currentPlayerIndex !== game.players.indexOf(player)) return;
+
+    console.log(
+      `[SERVER] declineProperty by ${player.name} (${socket.id}) in game ${game.id} ` +
+      `(auctionsEnabled: ${game.auctionsEnabled})`
+    );
 
     if (game.auctionsEnabled) {
       // Start auction if enabled
