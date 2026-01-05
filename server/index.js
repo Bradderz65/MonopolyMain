@@ -133,6 +133,34 @@ app.get('/api/debug/give-property/:gameId/:playerName/:propertyIndex', (req, res
   });
 });
 
+// Debug endpoint to give money to a player
+app.get('/api/debug/give-money/:gameId/:playerName/:amount', (req, res) => {
+  const game = gameManager.getGame(req.params.gameId);
+  if (!game) {
+    return res.status(404).json({ error: 'Game not found' });
+  }
+
+  const amount = parseInt(req.params.amount);
+  if (isNaN(amount)) {
+    return res.status(400).json({ error: 'Invalid amount' });
+  }
+
+  const targetPlayer = game.players.find(p => p.name === req.params.playerName);
+  if (!targetPlayer) {
+    return res.status(404).json({ error: 'Player not found', availablePlayers: game.players.map(p => p.name) });
+  }
+
+  targetPlayer.money += amount;
+  game.addLog(`[DEBUG] £${amount} given to ${targetPlayer.name}`);
+  io.to(game.id).emit('turnEnded', { game: game.getState() });
+
+  res.json({
+    success: true,
+    playerName: targetPlayer.name,
+    newBalance: targetPlayer.money
+  });
+});
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
   console.log(`Player connected: ${socket.id}`);
