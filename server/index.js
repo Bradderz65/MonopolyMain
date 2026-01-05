@@ -26,6 +26,11 @@ app.get('/api/games', (req, res) => {
   res.json(gameManager.getPublicGames());
 });
 
+// Admin API - returns all games including started/private (for admin dashboard)
+app.get('/api/admin/games', (req, res) => {
+  res.json(gameManager.getAllGamesForAdmin());
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', games: gameManager.getGameCount() });
 });
@@ -425,7 +430,14 @@ io.on('connection', (socket) => {
     const game = gameManager.getGame(gameId);
     if (!game || !game.started) return;
     const player = game.getPlayer(socket.id);
-    if (!player || game.currentPlayerIndex !== game.players.indexOf(player)) return;
+    if (!player) return;
+
+    // Verify it's the player's turn
+    if (game.currentPlayerIndex !== game.players.indexOf(player)) {
+      socket.emit('error', { message: 'You can only buy properties on your turn' });
+      return;
+    }
+
     const result = game.buyProperty();
     if (result.success) {
       io.to(game.id).emit('propertyBought', { result, game: game.getState() });
@@ -488,7 +500,13 @@ io.on('connection', (socket) => {
     const game = gameManager.getGame(gameId);
     if (!game || !game.started) return;
     const player = game.getPlayer(socket.id);
-    if (!player || game.currentPlayerIndex !== game.players.indexOf(player)) return;
+    if (!player) return;
+
+    // Verify it's the player's turn
+    if (game.currentPlayerIndex !== game.players.indexOf(player)) {
+      socket.emit('error', { message: 'You can only decline properties on your turn' });
+      return;
+    }
 
     console.log(
       `[SERVER] declineProperty by ${player.name} (${socket.id}) in game ${game.id} ` +
@@ -522,6 +540,13 @@ io.on('connection', (socket) => {
     if (!game || !game.started) return;
     const player = game.getPlayer(socket.id);
     if (!player) return;
+
+    // Verify it's the player's turn
+    if (game.currentPlayerIndex !== game.players.indexOf(player)) {
+      socket.emit('error', { message: 'You can only build houses on your turn' });
+      return;
+    }
+
     const result = game.buildHouse(player, propertyIndex);
     if (result.success) {
       io.to(game.id).emit('houseBuilt', { result, game: game.getState() });
@@ -535,6 +560,13 @@ io.on('connection', (socket) => {
     if (!game || !game.started) return;
     const player = game.getPlayer(socket.id);
     if (!player) return;
+
+    // Verify it's the player's turn
+    if (game.currentPlayerIndex !== game.players.indexOf(player)) {
+      socket.emit('error', { message: 'You can only sell houses on your turn' });
+      return;
+    }
+
     const result = game.sellHouse(player, propertyIndex);
     if (result.success) {
       io.to(game.id).emit('houseSold', { result, game: game.getState() });
@@ -725,14 +757,128 @@ io.on('connection', (socket) => {
   });
 });
 
+// Serve admin dashboard
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
 // Serve React app for any non-API routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+  const buildPath = path.join(__dirname, '../client/build', 'index.html');
+  const fs = require('fs');
+
+  if (fs.existsSync(buildPath)) {
+    res.sendFile(buildPath);
+  } else {
+    // Development mode - client is served separately by React dev server
+    res.status(200).send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Monopoly - Development Mode</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+              color: #e0e0e0;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+              margin: 0;
+            }
+            .container {
+              text-align: center;
+              padding: 40px;
+              background: rgba(255,255,255,0.1);
+              border-radius: 16px;
+              backdrop-filter: blur(10px);
+            }
+            h1 { color: #4ade80; margin-bottom: 20px; }
+            p { margin: 10px 0; line-height: 1.6; }
+            a { color: #60a5fa; text-decoration: none; }
+            a:hover { text-decoration: underline; }
+            .links { margin-top: 30px; }
+            .links a {
+              display: inline-block;
+              margin: 10px;
+              padding: 12px 24px;
+              background: #4ade80;
+              color: #1a1a2e;
+              border-radius: 8px;
+              font-weight: bold;
+            }
+            .links a:hover { background: #22c55e; text-decoration: none; }
+            code {
+              background: rgba(0,0,0,0.3);
+              padding: 2px 8px;
+              border-radius: 4px;
+              font-size: 0.9em;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>🎲 Monopoly Server Running</h1>
+            <p>The API server is running, but the React client build was not found.</p>
+            <p>In <strong>development mode</strong>, use the React dev server on port 3000.</p>
+            <p>For <strong>production</strong>, run <code>npm run build</code> in the client folder.</p>
+            <div class="links">
+              <a href="http://localhost:3000">Open Game (Dev)</a>
+              <a href="/admin">Admin Dashboard</a>
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+  }
 });
+
+// Get local IP addresses
+function getLocalIPs() {
+  const os = require('os');
+  const interfaces = os.networkInterfaces();
+  const addresses = [];
+
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      // Skip internal and non-IPv4 addresses
+      if (iface.family === 'IPv4' && !iface.internal) {
+        addresses.push({ name, address: iface.address });
+      }
+    }
+  }
+
+  return addresses;
+}
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
+  const localIPs = getLocalIPs();
+
+  console.log('\n');
+  console.log('╔══════════════════════════════════════════════════════════════════╗');
+  console.log('║            🎩 MONOPOLY SERVER STARTED                            ║');
+  console.log('╠══════════════════════════════════════════════════════════════════╣');
+  console.log(`║  Local:        http://localhost:${PORT}                            ║`);
+
+  localIPs.forEach(ip => {
+    const url = `http://${ip.address}:${PORT}`;
+    const padded = url.padEnd(40);
+    console.log(`║  Network:      ${padded}     ║`);
+  });
+
+  console.log('╠══════════════════════════════════════════════════════════════════╣');
+  console.log(`║  🔧 Admin:      http://localhost:${PORT}/admin                       ║`);
+
+  if (localIPs.length > 0) {
+    const adminUrl = `http://${localIPs[0].address}:${PORT}/admin`;
+    const paddedAdmin = adminUrl.padEnd(40);
+    console.log(`║  🔧 Admin:      ${paddedAdmin}    ║`);
+  }
+
+  console.log('╚══════════════════════════════════════════════════════════════════╝');
+  console.log('\n  Share the Network URL with players on your local network!\n');
 });
 
 // Save games on shutdown

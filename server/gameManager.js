@@ -128,6 +128,32 @@ class GameManager {
     return publicGames;
   }
 
+  // Get all games for admin dashboard (includes started and private games)
+  getAllGamesForAdmin() {
+    const allGames = [];
+    this.games.forEach((game, id) => {
+      allGames.push({
+        id: game.id,
+        name: game.name,
+        started: game.started,
+        isPrivate: game.isPrivate,
+        maxPlayers: game.maxPlayers,
+        currentPlayerIndex: game.currentPlayerIndex,
+        players: game.players.map(p => ({
+          name: p.name,
+          token: p.token,
+          money: p.money,
+          position: p.position,
+          bankrupt: p.bankrupt,
+          inJail: p.inJail,
+          isBot: p.isBot,
+          disconnected: p.disconnected
+        }))
+      });
+    });
+    return allGames;
+  }
+
   getGameCount() {
     return this.games.size;
   }

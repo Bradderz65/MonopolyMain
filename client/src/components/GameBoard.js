@@ -275,45 +275,45 @@ function GameBoard({
           <div className="game-code-display">{gameState.id}</div>
           <p>Share this code with friends to join!</p>
 
-            <div className="players-waiting">
-              <h3>Players ({gameState.players.length}/{gameState.maxPlayers || 4})</h3>
-              <div className="players-waiting-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-                {gameState.players.map((player, idx) => (
-                  <div 
-                    key={player.id} 
-                    className="player-chip"
-                    style={{
-                      '--player-color': player.color,
-                      borderLeft: `3px solid ${player.color}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '8px 12px',
-                      background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, color-mix(in srgb, var(--player-color, #4ecdc4) 15%, transparent) 100%)',
-                      borderRadius: '8px',
-                      fontSize: '1rem',
-                      fontWeight: '500',
-                      color: 'white',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                    }}
-                  >
-                    <span className="player-token">{player.token}</span>
-                    <span className="player-name">{player.name}</span>
-                    {player.isHost && (
-                      <span className="host-badge" style={{ 
-                        fontSize: '0.65rem', 
-                        background: '#f39c12', 
-                        color: '#000', 
-                        padding: '2px 6px', 
-                        borderRadius: '4px',
-                        marginLeft: '4px',
-                        fontWeight: '700'
-                      }}>HOST</span>
-                    )}
-                  </div>
-                ))}
-              </div>
+          <div className="players-waiting">
+            <h3>Players ({gameState.players.length}/{gameState.maxPlayers || 4})</h3>
+            <div className="players-waiting-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+              {gameState.players.map((player, idx) => (
+                <div
+                  key={player.id}
+                  className="player-chip"
+                  style={{
+                    '--player-color': player.color,
+                    borderLeft: `3px solid ${player.color}`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 12px',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, color-mix(in srgb, var(--player-color, #4ecdc4) 15%, transparent) 100%)',
+                    borderRadius: '8px',
+                    fontSize: '1rem',
+                    fontWeight: '500',
+                    color: 'white',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  <span className="player-token">{player.token}</span>
+                  <span className="player-name">{player.name}</span>
+                  {player.isHost && (
+                    <span className="host-badge" style={{
+                      fontSize: '0.65rem',
+                      background: '#f39c12',
+                      color: '#000',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      marginLeft: '4px',
+                      fontWeight: '700'
+                    }}>HOST</span>
+                  )}
+                </div>
+              ))}
             </div>
+          </div>
 
           <div className="waiting-actions">
             {myPlayer?.isHost && (
@@ -329,7 +329,7 @@ function GameBoard({
                   <select
                     value={botDifficulty}
                     onChange={(e) => setBotDifficulty(e.target.value)}
-                    style={{ 
+                    style={{
                       padding: '10px 14px',
                       borderRadius: '10px',
                       border: 'none',
@@ -521,20 +521,20 @@ function GameBoard({
 
       <div className="game-main">
         <div className={`board-container ${followMode ? 'follow-mode' : ''}`}>
-            <Board
-              board={gameState.board}
-              players={gameState.players}
-              onSpaceClick={setSelectedProperty}
-              animatingPlayer={animatingPlayer}
-              followMode={followMode}
-              followPosition={followPosition}
-              eventToast={eventToast}
-              freeParking={gameState.freeParking}
-              housesAvailable={gameState.housesAvailable}
-              hotelsAvailable={gameState.hotelsAvailable}
-              currentCard={currentCard}
-              ownerDotScale={ownerDotScale}
-            />
+          <Board
+            board={gameState.board}
+            players={gameState.players}
+            onSpaceClick={setSelectedProperty}
+            animatingPlayer={animatingPlayer}
+            followMode={followMode}
+            followPosition={followPosition}
+            eventToast={eventToast}
+            freeParking={gameState.freeParking}
+            housesAvailable={gameState.housesAvailable}
+            hotelsAvailable={gameState.hotelsAvailable}
+            currentCard={currentCard}
+            ownerDotScale={ownerDotScale}
+          />
 
         </div>
 
@@ -608,26 +608,26 @@ function GameBoard({
               />
             )}
             {activeTab === 'actions' && (
-                <ActionsPanel
-                  gameState={gameState}
-                  myPlayer={myPlayer}
-                  isMyTurn={isMyTurn}
-                  rollDice={rollDice}
-                  buyProperty={buyProperty}
-                  declineProperty={declineProperty}
-                  placeBid={placeBid}
-                  passBid={passBid}
-                  payJailFine={payJailFine}
-                  useJailCard={useJailCard}
-                  endTurn={endTurn}
-                  declareBankruptcy={declareBankruptcy}
-                  proposeTrade={proposeTrade}
-                  acceptTrade={acceptTrade}
-                  declineTrade={declineTrade}
-                  followMode={followMode}
-                  setFollowMode={setFollowMode}
-                  animatingPlayer={animatingPlayer}
-                />
+              <ActionsPanel
+                gameState={gameState}
+                myPlayer={myPlayer}
+                isMyTurn={isMyTurn}
+                rollDice={rollDice}
+                buyProperty={buyProperty}
+                declineProperty={declineProperty}
+                placeBid={placeBid}
+                passBid={passBid}
+                payJailFine={payJailFine}
+                useJailCard={useJailCard}
+                endTurn={endTurn}
+                declareBankruptcy={declareBankruptcy}
+                proposeTrade={proposeTrade}
+                acceptTrade={acceptTrade}
+                declineTrade={declineTrade}
+                followMode={followMode}
+                setFollowMode={setFollowMode}
+                animatingPlayer={animatingPlayer}
+              />
 
             )}
             {activeTab === 'properties' && (
@@ -638,6 +638,7 @@ function GameBoard({
                 sellHouse={sellHouse}
                 mortgageProperty={mortgageProperty}
                 unmortgageProperty={unmortgageProperty}
+                isMyTurn={isMyTurn}
               />
             )}
             {activeTab === 'log' && logTabVisible && (

@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monopoly Admin Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      color: #fff;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding: 20px 25px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      background: linear-gradient(135deg, #4ecdc4, #44a08d);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      background: rgba(46, 204, 113, 0.2);
+      border-radius: 25px;
+      border: 1px solid rgba(46, 204, 113, 0.3);
+    }
+
+    .status-indicator.offline {
+      background: rgba(231, 76, 60, 0.2);
+      border-color: rgba(231, 76, 60, 0.3);
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #2ecc71;
+      animation: pulse 2s infinite;
+    }
+
+    .status-indicator.offline .status-dot {
+      background: #e74c3c;
+      animation: none;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.6;
+        transform: scale(1.1);
+      }
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .card-header h2 {
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-header .badge {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      background: rgba(78, 205, 196, 0.2);
+      border-radius: 12px;
+      color: #4ecdc4;
+    }
+
+    .connection-info {
+      display: grid;
+      gap: 15px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 15px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+    }
+
+    .info-label {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.9rem;
+    }
+
+    .info-value {
+      font-family: 'Consolas', monospace;
+      font-weight: 600;
+      color: #4ecdc4;
+    }
+
+    .copy-btn {
+      background: rgba(78, 205, 196, 0.2);
+      border: none;
+      color: #4ecdc4;
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: rgba(78, 205, 196, 0.4);
+    }
+
+    .copy-btn.copied {
+      background: rgba(46, 204, 113, 0.4);
+      color: #2ecc71;
+    }
+
+    .games-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .game-item {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.2s;
+    }
+
+    .game-item:hover {
+      background: rgba(0, 0, 0, 0.3);
+      border-color: rgba(78, 205, 196, 0.3);
+    }
+
+    .game-item.selected {
+      border-color: #4ecdc4;
+      background: rgba(78, 205, 196, 0.1);
+    }
+
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .game-name {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .game-status {
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 10px;
+    }
+
+    .game-status.waiting {
+      background: rgba(241, 196, 15, 0.2);
+      color: #f1c40f;
+    }
+
+    .game-status.in-progress {
+      background: rgba(46, 204, 113, 0.2);
+      color: #2ecc71;
+    }
+
+    .game-id {
+      font-family: 'Consolas', monospace;
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 10px;
+    }
+
+    .game-players {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .player-chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      font-size: 0.8rem;
+    }
+
+    .player-chip.current {
+      background: rgba(78, 205, 196, 0.3);
+      border: 1px solid rgba(78, 205, 196, 0.5);
+    }
+
+    .player-chip.bankrupt {
+      opacity: 0.5;
+      text-decoration: line-through;
+    }
+
+    .debug-section {
+      display: grid;
+      gap: 12px;
+    }
+
+    .debug-group {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      padding: 15px;
+    }
+
+    .debug-group h3 {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 12px;
+    }
+
+    .debug-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .input-group label {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    input,
+    select {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: #4ecdc4;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    input::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    select option {
+      background: #1a1a2e;
+      color: #fff;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #4ecdc4, #44a08d);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(78, 205, 196, 0.4);
+    }
+
+    .btn-warning {
+      background: linear-gradient(135deg, #f39c12, #e67e22);
+      color: #fff;
+    }
+
+    .btn-warning:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(243, 156, 18, 0.4);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .log-output {
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 10px;
+      padding: 15px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: 'Consolas', monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    .log-entry {
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .log-entry.success {
+      color: #2ecc71;
+    }
+
+    .log-entry.error {
+      color: #e74c3c;
+    }
+
+    .log-entry.info {
+      color: #3498db;
+    }
+
+    .log-time {
+      color: rgba(255, 255, 255, 0.4);
+      margin-right: 10px;
+    }
+
+    .refresh-btn {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      padding: 5px;
+      font-size: 1.2rem;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover {
+      color: #4ecdc4;
+      transform: rotate(180deg);
+    }
+
+    .no-games {
+      text-align: center;
+      padding: 40px 20px;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .no-games-icon {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .board-positions {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .position-btn {
+      padding: 6px;
+      font-size: 0.7rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .position-btn:hover {
+      background: rgba(78, 205, 196, 0.2);
+      border-color: #4ecdc4;
+    }
+
+    .position-btn.special {
+      background: rgba(155, 89, 182, 0.2);
+      border-color: rgba(155, 89, 182, 0.3);
+    }
+
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+      }
+
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .debug-controls {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>🎩 Monopoly Admin Dashboard</h1>
+      <div class="status-indicator" id="serverStatus">
+        <div class="status-dot"></div>
+        <span id="statusText">Checking...</span>
+      </div>
+    </header>
+
+    <div class="dashboard-grid">
+      <!-- Connection Info Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2>🌐 Connection Info</h2>
+        </div>
+        <div class="connection-info">
+          <div class="info-row">
+            <span class="info-label">Server URL</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="info-value" id="serverUrl">Loading...</span>
+              <button class="copy-btn" onclick="copyToClipboard('serverUrl')">Copy</button>
+            </div>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Local IP</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="info-value" id="localIp">Loading...</span>
+              <button class="copy-btn" onclick="copyToClipboard('localIp')">Copy</button>
+            </div>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Port</span>
+            <span class="info-value" id="portNumber">3001</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Active Games</span>
+            <span class="info-value" id="gameCount">0</span>
+          </div>
+        </div>
+        <div class="quick-actions">
+          <button class="btn btn-primary" onclick="window.open('/', '_blank')">🎮 Open Game</button>
+          <button class="btn btn-danger" onclick="resetAllGames()">🗑️ Reset All Games</button>
+        </div>
+      </div>
+
+      <!-- Active Games Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2>🎮 Active Games</h2>
+          <button class="refresh-btn" onclick="refreshGames()">🔄</button>
+        </div>
+        <div class="games-list" id="gamesList">
+          <div class="no-games">
+            <div class="no-games-icon">🎲</div>
+            <p>No active games</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Debug Tools Card -->
+      <div class="card" style="grid-column: span 2;">
+        <div class="card-header">
+          <h2>🔧 Debug Tools</h2>
+          <span class="badge" id="selectedGameBadge">No game selected</span>
+        </div>
+
+        <div class="debug-section">
+          <!-- Turn Control -->
+          <div class="debug-group">
+            <h3>⏩ Turn Control</h3>
+            <div class="debug-controls">
+              <button class="btn btn-primary" onclick="advanceTurn()">Skip Turn</button>
+              <button class="btn btn-warning" onclick="releaseFromJail()">Release from Jail</button>
+            </div>
+          </div>
+
+          <!-- Player Control -->
+          <div class="debug-group">
+            <h3>👤 Player Control</h3>
+            <div class="debug-controls">
+              <div class="input-group">
+                <label>Player</label>
+                <select id="playerSelect" style="min-width: 150px;">
+                  <option value="">Select a player...</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label>Position (0-39)</label>
+                <input type="number" id="positionInput" placeholder="0" min="0" max="39" style="width: 80px;">
+              </div>
+              <button class="btn btn-primary" onclick="movePlayer()">Move Player</button>
+            </div>
+          </div>
+
+          <!-- Money Control -->
+          <div class="debug-group">
+            <h3>💰 Money Control</h3>
+            <div class="debug-controls">
+              <div class="input-group">
+                <label>Amount</label>
+                <input type="number" id="moneyAmount" placeholder="500" style="width: 100px;">
+              </div>
+              <button class="btn btn-primary" onclick="giveMoney()">Give Money</button>
+            </div>
+          </div>
+
+          <!-- Property Control -->
+          <div class="debug-group">
+            <h3>🏠 Property Control</h3>
+            <div class="debug-controls">
+              <div class="input-group">
+                <label>Property</label>
+                <select id="propertySelect" style="min-width: 200px;">
+                  <option value="">Select a property...</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" onclick="giveProperty()">Give Property</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Log Output Card -->
+      <div class="card" style="grid-column: span 2;">
+        <div class="card-header">
+          <h2>📋 Action Log</h2>
+          <button class="btn btn-secondary" onclick="clearLog()">Clear</button>
+        </div>
+        <div class="log-output" id="logOutput">
+          <div class="log-entry info">
+            <span class="log-time">[--:--:--]</span>
+            Admin dashboard loaded. Select a game to use debug tools.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration
+    const API_BASE = window.location.origin;
+    let selectedGameId = null;
+    let gamesData = [];
+    let refreshInterval = null;
+
+    // Board positions for reference
+    const BOARD_SPACES = [
+      'GO', 'Old Kent Road', 'Community Chest', 'Whitechapel Road', 'Income Tax',
+      'Kings Cross', 'The Angel Islington', 'Chance', 'Euston Road', 'Pentonville Road',
+      'Jail', 'Pall Mall', 'Electric Company', 'Whitehall', 'Northumberland Avenue',
+      'Marylebone', 'Bow Street', 'Community Chest', 'Marlborough Street', 'Vine Street',
+      'Free Parking', 'Strand', 'Chance', 'Fleet Street', 'Trafalgar Square',
+      'Fenchurch St', 'Leicester Square', 'Coventry Street', 'Water Works', 'Piccadilly',
+      'Go To Jail', 'Regent Street', 'Oxford Street', 'Community Chest', 'Bond Street',
+      'Liverpool St', 'Chance', 'Park Lane', 'Super Tax', 'Mayfair'
+    ];
+
+    const PROPERTY_INDICES = [1, 3, 6, 8, 9, 11, 13, 14, 16, 18, 19, 21, 23, 24, 26, 27, 29, 31, 32, 34, 37, 39];
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      checkServerStatus();
+      refreshGames();
+      populatePropertySelect();
+
+      // Auto-refresh every 3 seconds
+      refreshInterval = setInterval(() => {
+        checkServerStatus();
+        refreshGames();
+      }, 3000);
+    });
+
+    // Copy to clipboard
+    function copyToClipboard(elementId) {
+      const element = document.getElementById(elementId);
+      const text = element.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = element.parentElement.querySelector('.copy-btn');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+
+    // Check server status
+    async function checkServerStatus() {
+      try {
+        const response = await fetch(`${API_BASE}/api/health`);
+        const data = await response.json();
+
+        const statusEl = document.getElementById('serverStatus');
+        const statusText = document.getElementById('statusText');
+
+        statusEl.classList.remove('offline');
+        statusText.textContent = `Online • ${data.games} games`;
+        document.getElementById('gameCount').textContent = data.games;
+
+        // Update connection info
+        document.getElementById('serverUrl').textContent = window.location.origin;
+        document.getElementById('localIp').textContent = window.location.hostname;
+        document.getElementById('portNumber').textContent = window.location.port || '3001';
+      } catch (error) {
+        const statusEl = document.getElementById('serverStatus');
+        const statusText = document.getElementById('statusText');
+
+        statusEl.classList.add('offline');
+        statusText.textContent = 'Offline';
+      }
+    }
+
+    // Refresh games list
+    async function refreshGames() {
+      try {
+        const response = await fetch(`${API_BASE}/api/admin/games`);
+        gamesData = await response.json();
+
+        // Auto-select first game if none selected or current selection no longer exists
+        if (gamesData.length > 0) {
+          const currentGameExists = selectedGameId && gamesData.some(g => g.id === selectedGameId);
+
+          if (!selectedGameId || !currentGameExists) {
+            // Auto-select the first game
+            selectGame(gamesData[0].id);
+            log(`Auto-selected game: ${gamesData[0].name}`, 'info');
+          } else {
+            // Update player list for current game (in case players changed)
+            const game = gamesData.find(g => g.id === selectedGameId);
+            if (game) {
+              updatePlayerSelect(game);
+            }
+          }
+        } else if (selectedGameId) {
+          // No games but we had one selected - clear selection
+          selectedGameId = null;
+          document.getElementById('selectedGameBadge').textContent = 'No game selected';
+          document.getElementById('playerSelect').innerHTML = '<option value="">Select a player...</option>';
+        }
+
+        renderGamesList();
+      } catch (error) {
+        log('Failed to fetch games', 'error');
+      }
+    }
+
+    // Update player select dropdown
+    function updatePlayerSelect(game) {
+      const playerSelect = document.getElementById('playerSelect');
+      const currentValue = playerSelect.value;
+      playerSelect.innerHTML = '<option value="">Select a player...</option>';
+
+      if (game && game.players) {
+        game.players.forEach(player => {
+          const option = document.createElement('option');
+          option.value = player.name;
+          option.textContent = `${player.token} ${player.name} (£${player.money})`;
+          if (player.bankrupt) {
+            option.textContent += ' [BANKRUPT]';
+            option.disabled = true;
+          }
+          playerSelect.appendChild(option);
+        });
+
+        // Restore previous selection if still valid
+        if (currentValue && game.players.some(p => p.name === currentValue)) {
+          playerSelect.value = currentValue;
+        } else if (game.players.length > 0 && !playerSelect.value) {
+          // Auto-select current player if no selection
+          const currentPlayer = game.players[game.currentPlayerIndex];
+          if (currentPlayer && !currentPlayer.bankrupt) {
+            playerSelect.value = currentPlayer.name;
+          }
+        }
+      }
+    }
+
+    // Render games list
+    function renderGamesList() {
+      const container = document.getElementById('gamesList');
+
+      if (gamesData.length === 0) {
+        container.innerHTML = `
+          <div class="no-games">
+            <div class="no-games-icon">🎲</div>
+            <p>No active games</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = gamesData.map(game => `
+        <div class="game-item ${selectedGameId === game.id ? 'selected' : ''}" onclick="selectGame('${game.id}')">
+          <div class="game-header">
+            <span class="game-name">${game.name}</span>
+            <span class="game-status ${game.started ? 'in-progress' : 'waiting'}">
+              ${game.started ? '▶ In Progress' : '⏳ Waiting'}
+            </span>
+          </div>
+          <div class="game-id">ID: ${game.id}</div>
+          <div class="game-players">
+            ${game.players.map((player, idx) => `
+              <span class="player-chip ${idx === game.currentPlayerIndex ? 'current' : ''} ${player.bankrupt ? 'bankrupt' : ''}">
+                ${player.token} ${player.name} (£${player.money})
+              </span>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Select a game
+    function selectGame(gameId) {
+      selectedGameId = gameId;
+      const game = gamesData.find(g => g.id === gameId);
+
+      document.getElementById('selectedGameBadge').textContent = game ? game.name : 'No game selected';
+
+      // Update player select using shared function
+      updatePlayerSelect(game);
+
+      renderGamesList();
+    }
+
+    // Populate property select
+    function populatePropertySelect() {
+      const select = document.getElementById('propertySelect');
+      PROPERTY_INDICES.forEach(idx => {
+        const option = document.createElement('option');
+        option.value = idx;
+        option.textContent = `${idx}: ${BOARD_SPACES[idx]}`;
+        select.appendChild(option);
+      });
+    }
+
+    // Log message
+    function log(message, type = 'info') {
+      const logOutput = document.getElementById('logOutput');
+      const time = new Date().toLocaleTimeString();
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.innerHTML = `<span class="log-time">[${time}]</span> ${message}`;
+      logOutput.insertBefore(entry, logOutput.firstChild);
+    }
+
+    // Clear log
+    function clearLog() {
+      document.getElementById('logOutput').innerHTML = '';
+      log('Log cleared', 'info');
+    }
+
+    // Check if game is selected
+    function checkGameSelected() {
+      if (!selectedGameId) {
+        log('No game selected! Click on a game first.', 'error');
+        return false;
+      }
+      return true;
+    }
+
+    // API Functions
+    async function advanceTurn() {
+      if (!checkGameSelected()) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/api/debug/advance-turn/${selectedGameId}`);
+        const data = await response.json();
+
+        if (data.success) {
+          log(`Turn advanced. Current player: ${data.currentPlayer}`, 'success');
+        } else {
+          log(`Failed: ${data.error}`, 'error');
+        }
+      } catch (error) {
+        log(`Error: ${error.message}`, 'error');
+      }
+    }
+
+    async function releaseFromJail() {
+      if (!checkGameSelected()) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/api/debug/release-jail/${selectedGameId}`);
+        const data = await response.json();
+
+        if (data.success) {
+          log(`Released ${data.releasedPlayer} from jail`, 'success');
+        } else {
+          log(`Failed: ${data.error}`, 'error');
+        }
+      } catch (error) {
+        log(`Error: ${error.message}`, 'error');
+      }
+    }
+
+    async function movePlayer() {
+      if (!checkGameSelected()) return;
+
+      const playerName = document.getElementById('playerSelect').value;
+      const position = document.getElementById('positionInput').value;
+
+      if (!playerName) {
+        log('Please select a player', 'error');
+        return;
+      }
+
+      if (position === '' || position < 0 || position > 39) {
+        log('Please enter a valid position (0-39)', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/api/debug/move-player/${selectedGameId}/${encodeURIComponent(playerName)}/${position}`);
+        const data = await response.json();
+
+        if (data.success) {
+          log(`Moved ${playerName} to position ${position} (${BOARD_SPACES[position]})`, 'success');
+        } else {
+          log(`Failed: ${data.error}`, 'error');
+        }
+      } catch (error) {
+        log(`Error: ${error.message}`, 'error');
+      }
+    }
+
+    async function giveMoney() {
+      if (!checkGameSelected()) return;
+
+      const playerName = document.getElementById('playerSelect').value;
+      const amount = document.getElementById('moneyAmount').value;
+
+      if (!playerName) {
+        log('Please select a player', 'error');
+        return;
+      }
+
+      if (!amount) {
+        log('Please enter an amount', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/api/debug/give-money/${selectedGameId}/${encodeURIComponent(playerName)}/${amount}`);
+        const data = await response.json();
+
+        if (data.success) {
+          log(`Gave £${amount} to ${playerName}. New balance: £${data.newBalance}`, 'success');
+        } else {
+          log(`Failed: ${data.error}`, 'error');
+        }
+      } catch (error) {
+        log(`Error: ${error.message}`, 'error');
+      }
+    }
+
+    async function giveProperty() {
+      if (!checkGameSelected()) return;
+
+      const playerName = document.getElementById('playerSelect').value;
+      const propertyIndex = document.getElementById('propertySelect').value;
+
+      if (!playerName) {
+        log('Please select a player', 'error');
+        return;
+      }
+
+      if (!propertyIndex) {
+        log('Please select a property', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/api/debug/give-property/${selectedGameId}/${encodeURIComponent(playerName)}/${propertyIndex}`);
+        const data = await response.json();
+
+        if (data.success) {
+          log(`Gave ${data.property} to ${data.newOwner} (was: ${data.previousOwner})`, 'success');
+        } else {
+          log(`Failed: ${data.error}`, 'error');
+        }
+      } catch (error) {
+        log(`Error: ${error.message}`, 'error');
+      }
+    }
+
+    async function resetAllGames() {
+      if (!confirm('Are you sure you want to reset ALL games? This cannot be undone.')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/api/reset`, { method: 'POST' });
+        const data = await response.json();
+
+        if (data.success) {
+          log('All games have been reset', 'success');
+          selectedGameId = null;
+          document.getElementById('selectedGameBadge').textContent = 'No game selected';
+          refreshGames();
+        } else {
+          log(`Failed: ${data.message}`, 'error');
+        }
+      } catch (error) {
+        log(`Error: ${error.message}`, 'error');
+      }
+    }
+  </script>
+</body>
+
+</html>

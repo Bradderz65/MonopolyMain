@@ -140,6 +140,7 @@ echo -e "${BOLD}${CYAN}Connect to the game:${NC}"
 echo ""
 echo -e "  ${YELLOW}Client (React Dev Server):${NC}  ${BOLD}http://localhost:3000${NC}"
 echo -e "  ${YELLOW}API Server:${NC}                  ${BOLD}http://localhost:3001${NC}"
+echo -e "  ${YELLOW}Admin Dashboard:${NC}             ${BOLD}http://localhost:3001/admin${NC}"
 echo ""
 
 # Get all network IPs
@@ -153,7 +154,8 @@ fi
 if [ ! -z "$IPS" ]; then
     while IFS= read -r ip; do
         if [ ! -z "$ip" ]; then
-            echo -e "    ${BOLD}http://${ip}:3000${NC}"
+            echo -e "    🎮 Game:  ${BOLD}http://${ip}:3000${NC}"
+            echo -e "    🔧 Admin: ${BOLD}http://${ip}:3001/admin${NC}"
         fi
     done <<< "$IPS"
 fi
@@ -165,6 +167,11 @@ echo -e "${CYAN}🔥 HOT RELOADING ENABLED:${NC}"
 echo -e "  ${YELLOW}•${NC} Edit client files (React) → Browser auto-refreshes"
 echo -e "  ${YELLOW}•${NC} Edit server files → Server auto-restarts"
 echo -e "  ${YELLOW}•${NC} Edit bot.js → Takes effect on next bot spawn"
+echo ""
+echo -e "${CYAN}🔧 ADMIN DASHBOARD:${NC}"
+echo -e "  ${YELLOW}•${NC} Monitor active games in real-time"
+echo -e "  ${YELLOW}•${NC} Use debug tools (move players, give money, etc.)"
+echo -e "  ${YELLOW}•${NC} Reset all games if needed"
 echo ""
 echo -e "${YELLOW}Press Ctrl+C to stop all servers${NC}"
 echo ""

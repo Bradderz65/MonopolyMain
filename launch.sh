@@ -130,7 +130,8 @@ echo ""
 
 # Localhost
 echo -e "  ${YELLOW}Local Machine:${NC}"
-echo -e "    ${BOLD}http://localhost:3001${NC}"
+echo -e "    🎮 Game:  ${BOLD}http://localhost:3001${NC}"
+echo -e "    🔧 Admin: ${BOLD}http://localhost:3001/admin${NC}"
 echo ""
 
 # Get all network IPs
@@ -154,7 +155,8 @@ if [ -z "$IPS" ]; then
 else
     while IFS= read -r ip; do
         if [ ! -z "$ip" ]; then
-            echo -e "    ${BOLD}http://${ip}:3001${NC}"
+            echo -e "    🎮 Game:  ${BOLD}http://${ip}:3001${NC}"
+            echo -e "    🔧 Admin: ${BOLD}http://${ip}:3001/admin${NC}"
         fi
     done <<< "$IPS"
 fi
@@ -163,10 +165,11 @@ echo ""
 echo -e "${BOLD}${GREEN}═══════════════════════════════════════════════════════════════${NC}"
 echo ""
 echo -e "${CYAN}Instructions:${NC}"
-echo -e "  1. Open the address above in a web browser"
+echo -e "  1. Open the game address above in a web browser"
 echo -e "  2. Enter your name and create or join a game"
 echo -e "  3. Share the game code with friends on the same network"
-echo -e "  4. Have fun playing Monopoly!"
+echo -e "  4. Use the Admin dashboard to monitor and debug games"
+echo -e "  5. Have fun playing Monopoly!"
 echo ""
 echo -e "${YELLOW}Press Ctrl+C to stop the server and exit${NC}"
 echo ""

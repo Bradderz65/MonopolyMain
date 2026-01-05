@@ -19,7 +19,8 @@ function PropertiesPanel({
   buildHouse,
   sellHouse,
   mortgageProperty,
-  unmortgageProperty
+  unmortgageProperty,
+  isMyTurn
 }) {
   if (!myPlayer || myPlayer.properties.length === 0) {
     return (
@@ -41,30 +42,32 @@ function PropertiesPanel({
   });
 
   const canBuildOnProperty = (property) => {
+    if (!isMyTurn) return false; // Can only build on your turn
     if (property.type !== 'property') return false;
     if (property.mortgaged) return false;
     if (property.houses >= 5) return false;
-    
+
     const colorGroup = board.filter(s => s.color === property.color);
     const ownsAll = colorGroup.every(s => s.owner === myPlayer.id);
     if (!ownsAll) return false;
-    
+
     const minHouses = Math.min(...colorGroup.map(s => s.houses || 0));
     if ((property.houses || 0) > minHouses) return false;
-    
+
     if (myPlayer.money < property.houseCost) return false;
-    
+
     return true;
   };
 
   const canSellHouse = (property) => {
+    if (!isMyTurn) return false; // Can only sell on your turn
     if (property.type !== 'property') return false;
     if (!property.houses || property.houses === 0) return false;
-    
+
     const colorGroup = board.filter(s => s.color === property.color);
     const maxHouses = Math.max(...colorGroup.map(s => s.houses || 0));
     if ((property.houses || 0) < maxHouses) return false;
-    
+
     return true;
   };
 
@@ -80,6 +83,20 @@ function PropertiesPanel({
 
   return (
     <div className="properties-panel">
+      {/* Show message when not your turn */}
+      {!isMyTurn && (
+        <div style={{
+          textAlign: 'center',
+          color: 'rgba(255,255,255,0.6)',
+          padding: '8px 12px',
+          background: 'rgba(255,255,255,0.05)',
+          borderRadius: '8px',
+          marginBottom: '12px',
+          fontSize: '0.85rem'
+        }}>
+          🔒 Building actions available on your turn
+        </div>
+      )}
       {Object.entries(groupedProperties).map(([group, properties]) => (
         <div key={group} className="property-group">
           <div className="property-group-header">
@@ -89,7 +106,7 @@ function PropertiesPanel({
             />
             <span>{group === 'railroad' ? 'Railroads' : group === 'utility' ? 'Utilities' : group}</span>
           </div>
-          
+
           {properties.map(property => (
             <div
               key={property.index}
@@ -108,7 +125,7 @@ function PropertiesPanel({
                       className="btn btn-secondary btn-small build-house-btn"
                       onClick={() => buildHouse(property.index)}
                       disabled={!canBuildOnProperty(property)}
-                      title={`Build house ($${property.houseCost})`}
+                      title={isMyTurn ? `Build house ($${property.houseCost})` : 'Wait for your turn'}
                     >
                       <span className="house-action-symbol">+</span>
                       <span className="house-action-icon" aria-hidden="true">🏠</span>
@@ -117,7 +134,7 @@ function PropertiesPanel({
                       className="btn btn-secondary btn-small sell-house-btn"
                       onClick={() => sellHouse(property.index)}
                       disabled={!canSellHouse(property)}
-                      title={`Sell house ($${property.houseCost / 2})`}
+                      title={isMyTurn ? `Sell house ($${property.houseCost / 2})` : 'Wait for your turn'}
                     >
                       <span className="house-action-symbol">-</span>
                       <span className="house-action-icon" aria-hidden="true">🏠</span>
@@ -153,3 +170,4 @@ function PropertiesPanel({
 }
 
 export default PropertiesPanel;
+
