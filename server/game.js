@@ -436,9 +436,27 @@ class Game {
       this.addLog(`${player.name} landed on ${space.name} but owner is unavailable`);
       return;
     }
-    player.money -= rent;
-    owner.money += rent;
-    this.addLog(`${player.name} paid £${rent} rent to ${owner.name}`);
+
+    if (player.money >= rent) {
+      player.money -= rent;
+      owner.money += rent;
+      this.addLog(`${player.name} paid £${rent} rent to ${owner.name}`);
+    } else {
+      // Insufficient funds - partial payment
+      const available = Math.max(0, player.money);
+      const owed = rent - available;
+
+      player.money = 0;
+      owner.money += available;
+      
+      // Create debt record
+      player.debt = { amount: owed, creditor: owner.id };
+      
+      this.addLog(`${player.name} paid £${available} rent to ${owner.name} and still owes £${owed}`);
+      
+      // Trigger bankruptcy/debt check
+      this.checkBankruptcy(player);
+    }
   }
 
   drawChanceCard(player) {
@@ -796,6 +814,7 @@ class Game {
       this.addLog(`${player.name} sold a house on ${property.name}`);
     }
 
+    this.processDebtPayment(player);
     this.checkBankruptcy(player);
     return { success: true, property: property };
   }
@@ -817,6 +836,7 @@ class Game {
     player.money += property.mortgage;
 
     this.addLog(`${player.name} mortgaged ${property.name} for £${property.mortgage}`);
+    this.processDebtPayment(player);
     this.checkBankruptcy(player);
     return { success: true, property: property };
   }
@@ -916,13 +936,50 @@ class Game {
     }
   }
 
-  checkBankruptcy(player) {
-    if (player.money < 0) {
-      const totalAssets = this.calculateTotalAssets(player);
-      if (totalAssets < Math.abs(player.money)) {
-        this.pendingAction = { type: 'mustPayOrBankrupt', amount: Math.abs(player.money) };
+  processDebtPayment(player) {
+    if (player.debt && player.money > 0) {
+      const payment = Math.min(player.money, player.debt.amount);
+      player.money -= payment;
+      player.debt.amount -= payment;
+
+      const creditor = this.players.find(p => p.id === player.debt.creditor);
+      if (creditor) {
+        creditor.money += payment;
+        // Don't log every micro-payment, maybe just final or significant ones
+        // this.addLog(`${player.name} paid £${payment} towards debt.`); 
+      }
+
+      if (player.debt.amount <= 0) {
+        this.addLog(`${player.name} has cleared their debt to ${creditor ? creditor.name : 'creditor'}!`);
+        player.debt = null;
       } else {
-        this.pendingAction = { type: 'mustRaiseFunds', amount: Math.abs(player.money) };
+        // Optional: Notify partial payment
+         this.addLog(`${player.name} paid £${payment} towards debt. Remaining: £${player.debt.amount}`);
+      }
+    }
+  }
+
+  checkBankruptcy(player) {
+    const debtAmount = player.debt ? player.debt.amount : (player.money < 0 ? Math.abs(player.money) : 0);
+
+    if (debtAmount > 0) {
+      const totalAssets = this.calculateTotalAssets(player);
+      // Note: calculateTotalAssets adds player.money, which is 0 if in debt, 
+      // or negative if using legacy negative-money logic. 
+      // If using legacy, we need to add back the negative money to get "Asset Value" only?
+      // Actually calculateTotalAssets returns (Money + PropValue).
+      // If Money is -500 and PropValue is 600, TotalAssets is 100.
+      // Debt is 500.
+      // If Assets (100) < Debt (500) -> Bankrupt. Correct.
+      
+      // If using new system: Money is 0. PropValue is 600. TotalAssets is 600.
+      // Debt is 500.
+      // 600 > 500 -> Can raise funds. Correct.
+
+      if (totalAssets < debtAmount) {
+        this.pendingAction = { type: 'mustPayOrBankrupt', amount: debtAmount };
+      } else {
+        this.pendingAction = { type: 'mustRaiseFunds', amount: debtAmount };
       }
     } else if (this.pendingAction && (this.pendingAction.type === 'mustRaiseFunds' || this.pendingAction.type === 'mustPayOrBankrupt')) {
       // Player is solvent again
@@ -956,6 +1013,7 @@ class Game {
     });
     player.properties = [];
     player.money = 0;
+    player.debt = null;
 
     if (this.currentPlayerIndex === this.players.indexOf(player)) {
       this.endTurn();

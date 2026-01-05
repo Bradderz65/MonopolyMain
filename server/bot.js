@@ -1294,6 +1294,12 @@ class MonopolyBot {
 
         let maxBid = property.price * this.config.auctionAggressiveness;
         
+        // Dynamic Wealth Adjustment:
+        // The more money we have, the more we are willing to "overpay".
+        // We add a portion of our available cash to the valuation to scale with wealth.
+        const wealthBonus = Math.max(0, this.myPlayer.money * 0.15);
+        maxBid += wealthBonus;
+
         // Add randomness for easier difficulties (makes bidding less optimal)
         if (this.config.auctionRandomness > 0) {
             const variance = (Math.random() - 0.5) * 2 * this.config.auctionRandomness;
@@ -1302,14 +1308,21 @@ class MonopolyBot {
 
         // Much higher for monopoly completion (only if bot recognizes monopoly value)
         if (this.config.recognizesMonopolyValue && this.wouldCompleteMyMonopoly(property)) {
-            maxBid = property.price * (1.3 + this.config.colorGroupAwareness * 0.5);
+            // Base high valuation for monopoly
+            const monopolyBase = property.price * (1.3 + this.config.colorGroupAwareness * 0.5);
+            maxBid = Math.max(maxBid, monopolyBase);
+            // Add extra wealth weight for completing a set
+            maxBid += (this.myPlayer.money * 0.2);
         }
 
         // Higher to block opponent monopoly (only if bot recognizes blocking)
         if (this.config.recognizesBlocking) {
             const blocked = this.wouldCompleteOpponentMonopoly(property);
             if (blocked) {
-                maxBid = Math.max(maxBid, property.price * (1.0 + this.config.blockOpponentBonus * 0.6));
+                const blockBase = property.price * (1.0 + this.config.blockOpponentBonus * 0.6);
+                maxBid = Math.max(maxBid, blockBase);
+                // Add extra wealth weight for blocking
+                maxBid += (this.myPlayer.money * 0.15);
             }
         }
 
@@ -1318,8 +1331,71 @@ class MonopolyBot {
             maxBid = Math.max(maxBid, property.price * 1.2);
         }
 
-        const canAfford = this.myPlayer.money - this.config.minCashReserve;
+        const canAfford = Math.max(0, this.myPlayer.money - this.config.minCashReserve);
         return Math.floor(Math.min(maxBid, canAfford));
+    }
+
+    /**
+     * Calculate how reluctant the bot is to bid on a specific property
+     * Returns 0.0 (Very Eager) to 1.0 (Very Reluctant)
+     */
+    calculateBidReluctance(property) {
+        if (!property) return 1.0;
+        
+        // CRITICAL CHECKS (Zero Reluctance)
+        // 1. Completes my monopoly
+        if (this.wouldCompleteMyMonopoly(property)) return 0.0;
+        
+        // 2. Blocks opponent monopoly
+        if (this.wouldCompleteOpponentMonopoly(property)) return 0.0;
+
+        // ANALYSIS
+        const colorAnalysis = this.analyzeColorGroups();
+        const playerAnalysis = this.analyzePlayerStrategies();
+        const myGroupData = colorAnalysis[property.color];
+        
+        // Base reluctance starts neutral
+        let reluctance = 0.5;
+
+        // FACTOR 1: Board Saturation (Land Grab Phase vs Late Game)
+        let totalUnowned = 0;
+        let totalProps = 0;
+        Object.values(colorAnalysis).forEach(g => {
+            totalUnowned += g.unowned;
+            totalProps += g.total;
+        });
+        const saturation = totalUnowned / totalProps;
+        
+        // If lots of unowned properties (early game), be eager to grab land
+        if (saturation > 0.6) reluctance -= 0.3; 
+        // If few unowned (late game), be pickier
+        else if (saturation < 0.2) reluctance += 0.2;
+
+        // FACTOR 2: My Holdings in Group
+        if (myGroupData) {
+            // I own some already? Be eager to complete.
+            if (myGroupData.myCount > 0) reluctance -= 0.2;
+            // I own none? Be reluctant to start a new disconnected color (unless early game)
+            else reluctance += 0.1;
+        }
+
+        // FACTOR 3: Opponent Threats (Soft Blocking)
+        // Check if any opponent has 2+ of this color (even if this isn't the LAST one needed)
+        let opponentHasMajority = false;
+        Object.values(playerAnalysis).forEach(p => {
+            const opponentGroup = p.colorGroups[property.color];
+            if (opponentGroup && opponentGroup.owned >= 2) opponentHasMajority = true;
+        });
+        // If opponent heavily invested, be eager to disrupt/tax them
+        if (opponentHasMajority) reluctance -= 0.3;
+
+        // FACTOR 4: Wealth Logic
+        const avgMoney = this.gameState.players.reduce((sum, p) => sum + p.money, 0) / this.gameState.players.length;
+        if (this.myPlayer.money > avgMoney * 1.5) reluctance -= 0.2; // Rich -> Eager
+        if (this.myPlayer.money < avgMoney * 0.6) reluctance += 0.3; // Poor -> Reluctant
+
+        // Clamp 0-1
+        return Math.max(0.0, Math.min(1.0, reluctance));
     }
 
     handleAuction(auction) {
@@ -1343,7 +1419,7 @@ class MonopolyBot {
             const waitMs = minDelayMs - sinceLastBid;
             this.scheduleAuctionTimer(
                 () => this.handleAuction(this.gameState.auction),
-                waitMs,
+                waitMs + 100, // Add small buffer
                 auction.property.index
             );
             return;
@@ -1355,15 +1431,40 @@ class MonopolyBot {
 
         // Calculate max bid using isolated logic (easier to test)
         const maxBid = this.calculateAuctionLimit(property);
+        const reluctance = this.calculateBidReluctance(property);
 
-        // Log reasoning for debugging/human-feel
-        if (this.wouldCompleteMyMonopoly(property)) {
-            console.log(`[BOT ${this.botName}] Bidding aggressively - completes monopoly`);
-        } else if (this.wouldCompleteOpponentMonopoly(property)) {
-            console.log(`[BOT ${this.botName}] Bidding to block opponent`);
+        // DECISION LOGIC
+        let shouldPass = false;
+
+        // If bid is already over our max, pass
+        if (minBid > maxBid) shouldPass = true;
+        
+        // RELUCTANCE CHECK (Dynamic probability to pass early)
+        else if (reluctance > 0.0) {
+            // Current Price Ratio (Current Bid / Base Price)
+            const priceRatio = minBid / property.price;
+
+            // If we are reluctant, we might pass even if affordable
+            // Higher reluctance = lower threshold to quit
+            
+            // Example: Reluctance 0.8 (Very reluctant)
+            // - If Price > 50% value, 30% chance to quit per turn
+            if (reluctance > 0.7 && priceRatio > 0.5) {
+                if (Math.random() < 0.3) shouldPass = true;
+            }
+            // Example: Reluctance 0.5 (Neutral)
+            // - If Price > 100% value, 20% chance to quit
+            else if (reluctance > 0.4 && priceRatio > 1.0) {
+                if (Math.random() < 0.2) shouldPass = true;
+            }
         }
 
-        if (minBid <= maxBid) {
+        // Log reasoning for debugging/human-feel
+        if (reluctance < 0.1) {
+             console.log(`[BOT ${this.botName}] Eager to win ${property.name}! (Reluctance: ${reluctance.toFixed(2)})`);
+        }
+
+        if (!shouldPass) {
             // Strategic bid increment
             let bidAmount = minBid;
 
@@ -1372,7 +1473,7 @@ class MonopolyBot {
             bidAmount = Math.min(minBid + increment, maxBid);
 
             const bidDelay = this.getRandomDelay('auctionBid');
-            console.log(`[BOT ${this.botName}] Bidding £${bidAmount} on ${property.name} (max: £${maxBid}) in ${Math.round(bidDelay / 1000)}s...`);
+            console.log(`[BOT ${this.botName}] Bidding £${bidAmount} on ${property.name} (max: £${maxBid}, r: ${reluctance.toFixed(2)})`);
 
             this.scheduleAuctionTimer(
                 () => this.socket.emit('auctionBid', { gameId: this.gameId, amount: bidAmount }),
@@ -1381,7 +1482,7 @@ class MonopolyBot {
             );
         } else {
             const passDelay = this.getRandomDelay('auctionPass');
-            console.log(`[BOT ${this.botName}] Passing on ${property.name} (min: £${minBid}, max: £${maxBid})`);
+            console.log(`[BOT ${this.botName}] Passing on ${property.name} (Reluctance: ${reluctance.toFixed(2)})`);
             this.scheduleAuctionTimer(
                 () => this.socket.emit('auctionPass', { gameId: this.gameId }),
                 passDelay,
