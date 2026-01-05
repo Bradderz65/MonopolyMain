@@ -102,6 +102,9 @@ async function runAllTests() {
     // Run Game Suite Tests
     await runTestSuite('Game Suite Tests', './test-game-suite.js');
 
+    // Run Debt & Auction Logic Tests
+    await runTestSuite('Debt & Bot Auction Tests', './test-debt-auction-logic.js');
+
     // Calculate total duration
     allResults.summary.duration = Date.now() - overallStart;
 
@@ -123,8 +126,8 @@ function generateFinalReport() {
     // Per-suite results
     for (const suite of allResults.suites) {
         const status = suite.failed === 0 ? '✅' : '❌';
-        const passRate = suite.passed + suite.failed > 0 
-            ? ((suite.passed / (suite.passed + suite.failed)) * 100).toFixed(0) 
+        const passRate = suite.passed + suite.failed > 0
+            ? ((suite.passed / (suite.passed + suite.failed)) * 100).toFixed(0)
             : 'N/A';
         console.log(`║  ${status} ${suite.name.padEnd(40)} ${String(suite.passed).padStart(3)}/${String(suite.passed + suite.failed).padStart(3)} (${passRate}%)    ║`);
     }
@@ -133,8 +136,8 @@ function generateFinalReport() {
 
     // Summary
     const total = allResults.summary.totalPassed + allResults.summary.totalFailed;
-    const overallPassRate = total > 0 
-        ? ((allResults.summary.totalPassed / total) * 100).toFixed(1) 
+    const overallPassRate = total > 0
+        ? ((allResults.summary.totalPassed / total) * 100).toFixed(1)
         : 'N/A';
 
     console.log(`║                                                                      ║`);
@@ -188,6 +191,11 @@ function generateFinalReport() {
     console.log('   ✓ Bot timeout detection');
     console.log('   ✓ Game persistence');
     console.log('   ✓ Win condition detection');
+    console.log('   ✓ Debt system (partial payment, tracking, repayment)');
+    console.log('   ✓ Bot difficulty levels (easy, medium, hard)');
+    console.log('   ✓ Difficulty-specific auction behavior');
+    console.log('   ✓ Difficulty-specific blocking recognition');
+    console.log('   ✓ Difficulty-specific trade multipliers');
 
     console.log('\n');
 }
