@@ -166,6 +166,51 @@ app.get('/api/debug/give-money/:gameId/:playerName/:amount', (req, res) => {
   });
 });
 
+// Debug endpoint to force a trade popup for testing UI
+app.get('/api/debug/trade-popup', (req, res) => {
+  const { gameId, playerId } = req.query;
+  const game = gameManager.getGame(gameId);
+
+  if (!game) {
+    return res.status(404).json({ error: 'Game not found' });
+  }
+
+  // If no playerId provided, pick the first human player
+  let targetPlayer = null;
+  if (playerId) {
+    targetPlayer = game.players.find(p => p.id === playerId || p.name === playerId);
+  } else {
+    targetPlayer = game.players.find(p => !p.isBot);
+  }
+
+  if (!targetPlayer) {
+    return res.status(404).json({ error: 'Target player not found' });
+  }
+
+  // Create dummy trade
+  const dummyTrade = {
+    id: `debug-trade-${Date.now()}`,
+    from: 'debug-bot',
+    to: targetPlayer.id,
+    offer: { money: 100, properties: [] },
+    request: { money: 50, properties: [] },
+    status: 'pending',
+    timestamp: Date.now()
+  };
+
+  // Add to game trades list so it can be accepted/declined
+  game.trades.push(dummyTrade);
+
+  // Emit event
+  io.to(game.id).emit('tradeProposed', { trade: dummyTrade, game: game.getState() });
+
+  res.json({
+    success: true,
+    message: `Trade popup sent to ${targetPlayer.name}`,
+    tradeId: dummyTrade.id
+  });
+});
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
   console.log(`Player connected: ${socket.id}`);
