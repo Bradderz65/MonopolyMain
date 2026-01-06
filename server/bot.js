@@ -189,17 +189,17 @@ class MonopolyBot {
 
             // Humanized delay ranges
             delays: {
-                rollDice: { min: 1000, max: 3000 },
-                buyProperty: { min: 2000, max: 5000 },
-                declineProperty: { min: 1500, max: 3500 },
-                auctionBid: { min: 1000, max: 3000 },
+                rollDice: { min: 500, max: 1500 },
+                buyProperty: { min: 1000, max: 3000 },
+                declineProperty: { min: 1000, max: 2500 },
+                auctionBid: { min: 500, max: 2000 },
                 auctionPass: { min: 800, max: 2000 },
                 tradeDecision: { min: 2000, max: 5000 },
                 proposeTrade: { min: 1500, max: 4000 },
                 buildHouse: { min: 300, max: 800 },
                 jailDecision: { min: 1500, max: 4000 },
-                endTurn: { min: 800, max: 2000 },
-                postLanding: { min: 2500, max: 5000 },
+                endTurn: { min: 500, max: 1500 },
+                postLanding: { min: 1000, max: 2500 },
                 sellAsset: { min: 500, max: 1500 },
             },
         };
@@ -255,8 +255,8 @@ class MonopolyBot {
         // 1. Difficulty Modifier
         // Hard bots are more decisive (faster processing)
         // Easy bots take longer to "think"
-        if (this.difficulty === 'hard') delay *= 0.75;
-        else if (this.difficulty === 'easy') delay *= 1.25;
+        if (this.difficulty === 'hard') delay *= 0.6;
+        else if (this.difficulty === 'easy') delay *= 1.1;
 
         // 2. Game Phase Modifier
         const phase = this.getGamePhase();
