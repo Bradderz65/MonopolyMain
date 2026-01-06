@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import TradePanel from './TradePanel';
+import DiceDisplay from './DiceDisplay';
 
 function ActionsPanel({
   gameState,
@@ -25,6 +26,7 @@ function ActionsPanel({
   const [showTrade, setShowTrade] = useState(false);
   const [currentTradeIndex, setCurrentTradeIndex] = useState(0);
   const [rollPending, setRollPending] = useState(false);
+  const [forceDiceAnimation, setForceDiceAnimation] = useState(false);
   const lastRollRef = useRef(gameState.lastDiceRoll);
 
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
@@ -62,15 +64,17 @@ function ActionsPanel({
   };
 
   useEffect(() => {
+    // If the roll changed (new object ref), trigger animation
+    if (gameState.lastDiceRoll !== lastRollRef.current) {
+      setForceDiceAnimation(true);
+      lastRollRef.current = gameState.lastDiceRoll;
+      // Also clear pending state if it was a roll
+      setRollPending(false);
+    }
+    
+    // Safety clear for turn change
     if (!isMyTurn) {
       setRollPending(false);
-      lastRollRef.current = gameState.lastDiceRoll;
-      return;
-    }
-
-    if (gameState.lastDiceRoll !== lastRollRef.current) {
-      setRollPending(false);
-      lastRollRef.current = gameState.lastDiceRoll;
     }
   }, [gameState.lastDiceRoll, isMyTurn]);
 
@@ -99,12 +103,7 @@ function ActionsPanel({
 
         {/* Dice Display */}
         {gameState.lastDiceRoll && (
-          <div className="dice-mini">
-            <span className="die">{gameState.lastDiceRoll.die1}</span>
-            <span className="die">{gameState.lastDiceRoll.die2}</span>
-            <span className="dice-sum">= {gameState.lastDiceRoll.total}</span>
-            {gameState.lastDiceRoll.isDoubles && <span className="doubles">×2</span>}
-          </div>
+          <DiceDisplay roll={gameState.lastDiceRoll} forceAnimate={forceDiceAnimation} />
         )}
       </div>
 

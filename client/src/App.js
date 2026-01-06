@@ -26,6 +26,30 @@ function App() {
   const gameStateRef = useRef(null);
   const currentPlayerRef = useRef(null);
 
+  // Helper to update game state while preserving the lastDiceRoll object reference
+  // if the values are identical. This prevents unnecessary re-animations of the dice.
+  const updateGameStateSafely = useCallback((newGame) => {
+    setGameState(prev => {
+      if (!prev || !newGame) return newGame;
+      
+      // Check if lastDiceRoll exists in both and has same values
+      if (prev.lastDiceRoll && newGame.lastDiceRoll &&
+          prev.lastDiceRoll.die1 === newGame.lastDiceRoll.die1 &&
+          prev.lastDiceRoll.die2 === newGame.lastDiceRoll.die2 &&
+          prev.lastDiceRoll.total === newGame.lastDiceRoll.total) {
+        
+        // Return new game state but with the OLD lastDiceRoll object reference
+        // This ensures strict equality checks (roll !== prevRoll) return false
+        return {
+          ...newGame,
+          lastDiceRoll: prev.lastDiceRoll
+        };
+      }
+      
+      return newGame;
+    });
+  }, []);
+
   const saveSession = (gameId, player) => {
     localStorage.setItem('monopoly_gameId', gameId);
     localStorage.setItem('monopoly_playerId', player.id);
@@ -211,6 +235,15 @@ function App() {
           console.log('[CLIENT] Skipping stale state update from landing result');
           return prev;
         }
+        
+        // Preserve lastDiceRoll object if values match
+        if (prev && prev.lastDiceRoll && game.lastDiceRoll &&
+            prev.lastDiceRoll.die1 === game.lastDiceRoll.die1 &&
+            prev.lastDiceRoll.die2 === game.lastDiceRoll.die2 &&
+            prev.lastDiceRoll.total === game.lastDiceRoll.total) {
+           return { ...game, lastDiceRoll: prev.lastDiceRoll };
+        }
+        
         return game;
       });
 
@@ -260,7 +293,17 @@ function App() {
         const updatedPlayers = game.players.map(p =>
           p.id === forcedMove.playerId ? { ...p, position: forcedMove.startPos } : p
         );
-        return { ...game, players: updatedPlayers };
+        
+        let rollToUse = game.lastDiceRoll;
+        // Preserve lastDiceRoll object if values match
+        if (prev.lastDiceRoll && game.lastDiceRoll &&
+            prev.lastDiceRoll.die1 === game.lastDiceRoll.die1 &&
+            prev.lastDiceRoll.die2 === game.lastDiceRoll.die2 &&
+            prev.lastDiceRoll.total === game.lastDiceRoll.total) {
+           rollToUse = prev.lastDiceRoll;
+        }
+
+        return { ...game, players: updatedPlayers, lastDiceRoll: rollToUse };
       });
 
       isAnimating = true;
@@ -398,17 +441,17 @@ function App() {
 
     newSocket.on('propertyBought', ({ result, game }) => {
       console.log('[CLIENT] propertyBought received - currentPlayerIndex:', game.currentPlayerIndex);
-      setGameState(game);
+      updateGameStateSafely(game);
       sounds.buyProperty();
     });
 
     newSocket.on('auctionStarted', ({ auction, game }) => {
-      setGameState(game);
+      updateGameStateSafely(game);
       sounds.auction();
     });
 
     newSocket.on('auctionUpdate', ({ auction, game }) => {
-      setGameState(game);
+      updateGameStateSafely(game);
       if (auction?.highestBidder) sounds.bid();
     });
 
@@ -432,68 +475,68 @@ function App() {
     });
 
     newSocket.on('houseBuilt', ({ result, game }) => {
-      setGameState(game);
+      updateGameStateSafely(game);
       sounds.buildHouse();
     });
 
     newSocket.on('houseSold', ({ result, game }) => {
-      setGameState(game);
+      updateGameStateSafely(game);
       sounds.sellHouse();
     });
 
     newSocket.on('propertyMortgaged', ({ result, game }) => {
-      setGameState(game);
+      updateGameStateSafely(game);
       sounds.mortgage();
     });
 
     newSocket.on('propertyUnmortgaged', ({ result, game }) => {
-      setGameState(game);
+      updateGameStateSafely(game);
       sounds.unmortgage();
     });
 
     newSocket.on('tradeProposed', ({ trade, game }) => {
-      setGameState(game);
+      updateGameStateSafely(game);
       sounds.trade();
     });
 
     newSocket.on('tradeCompleted', ({ result, game }) => {
-      setGameState(game);
+      updateGameStateSafely(game);
       sounds.tradeAccept();
     });
 
     newSocket.on('tradeDeclined', ({ tradeId, game }) => {
-      setGameState(game);
+      updateGameStateSafely(game);
       sounds.tradeDecline();
     });
 
     newSocket.on('jailFinePaid', ({ result, game }) => {
-      setGameState(game);
+      updateGameStateSafely(game);
       sounds.jailFree();
     });
 
     newSocket.on('jailCardUsed', ({ result, game }) => {
-      setGameState(game);
+      updateGameStateSafely(game);
       sounds.jailFree();
     });
 
     newSocket.on('turnEnded', ({ game }) => {
       console.log('[CLIENT] turnEnded received - currentPlayerIndex:', game.currentPlayerIndex, 'player:', game.players[game.currentPlayerIndex]?.name);
-      setGameState(game);
+      updateGameStateSafely(game);
       sounds.turnStart();
     });
 
     newSocket.on('propertyDeclined', ({ game }) => {
       console.log('[CLIENT] propertyDeclined received - currentPlayerIndex:', game.currentPlayerIndex);
-      setGameState(game);
+      updateGameStateSafely(game);
     });
 
     newSocket.on('playerBankrupt', ({ result, game }) => {
-      setGameState(game);
+      updateGameStateSafely(game);
       sounds.bankrupt();
     });
 
     newSocket.on('gameOver', ({ winner, game }) => {
-      setGameState(game);
+      updateGameStateSafely(game);
       sounds.win();
     });
 
