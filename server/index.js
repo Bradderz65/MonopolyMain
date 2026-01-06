@@ -561,9 +561,12 @@ io.on('connection', (socket) => {
     const player = game.getPlayer(socket.id);
     if (!player) return;
 
-    // Verify it's the player's turn
-    if (game.currentPlayerIndex !== game.players.indexOf(player)) {
-      socket.emit('error', { message: 'You can only sell houses on your turn' });
+    // Allow selling houses on player's turn OR when player has debt to pay
+    const isPlayersTurn = game.currentPlayerIndex === game.players.indexOf(player);
+    const hasDebt = player.debt && player.debt.amount > 0;
+
+    if (!isPlayersTurn && !hasDebt) {
+      socket.emit('error', { message: 'You can only sell houses on your turn (unless paying debt)' });
       return;
     }
 

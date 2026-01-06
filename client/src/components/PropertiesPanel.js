@@ -60,7 +60,10 @@ function PropertiesPanel({
   };
 
   const canSellHouse = (property) => {
-    if (!isMyTurn) return false; // Can only sell on your turn
+    // Can sell if it's your turn OR you have debt to pay
+    const hasDebt = myPlayer.debt && myPlayer.debt.amount > 0;
+    if (!isMyTurn && !hasDebt) return false;
+
     if (property.type !== 'property') return false;
     if (!property.houses || property.houses === 0) return false;
 
@@ -81,10 +84,12 @@ function PropertiesPanel({
     ));
   };
 
+  const hasDebt = myPlayer && myPlayer.debt && myPlayer.debt.amount > 0;
+
   return (
     <div className="properties-panel">
       {/* Show message when not your turn */}
-      {!isMyTurn && (
+      {!isMyTurn && !hasDebt && (
         <div style={{
           textAlign: 'center',
           color: 'rgba(255,255,255,0.6)',
@@ -95,6 +100,20 @@ function PropertiesPanel({
           fontSize: '0.85rem'
         }}>
           🔒 Building actions available on your turn
+        </div>
+      )}
+      {!isMyTurn && hasDebt && (
+        <div style={{
+          textAlign: 'center',
+          color: '#e74c3c',
+          padding: '8px 12px',
+          background: 'rgba(231, 76, 60, 0.1)',
+          borderRadius: '8px',
+          marginBottom: '12px',
+          fontSize: '0.85rem',
+          border: '1px solid rgba(231, 76, 60, 0.2)'
+        }}>
+          ⚠️ You can sell houses to pay your debt
         </div>
       )}
       {Object.entries(groupedProperties).map(([group, properties]) => (

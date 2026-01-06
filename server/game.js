@@ -55,6 +55,7 @@ class Game {
     this.housesAvailable = 32;
     this.hotelsAvailable = 12;
     this.turnStartTime = Date.now();
+    this.lastActionTime = Date.now();
   }
 
   shuffleArray(array) {
@@ -448,12 +449,12 @@ class Game {
 
       player.money = 0;
       owner.money += available;
-      
+
       // Create debt record
       player.debt = { amount: owed, creditor: owner.id };
-      
+
       this.addLog(`${player.name} paid £${available} rent to ${owner.name} and still owes £${owed}`);
-      
+
       // Trigger bankruptcy/debt check
       this.checkBankruptcy(player);
     }
@@ -683,7 +684,7 @@ class Game {
     const remainingBidders = this.auction.participants.filter(
       id => !this.auction.passedPlayers.includes(id)
     );
-    
+
     if (remainingBidders.length <= 1) {
       this.completeAuction();
     }
@@ -954,7 +955,7 @@ class Game {
         player.debt = null;
       } else {
         // Optional: Notify partial payment
-         this.addLog(`${player.name} paid £${payment} towards debt. Remaining: £${player.debt.amount}`);
+        this.addLog(`${player.name} paid £${payment} towards debt. Remaining: £${player.debt.amount}`);
       }
     }
   }
@@ -971,7 +972,7 @@ class Game {
       // If Money is -500 and PropValue is 600, TotalAssets is 100.
       // Debt is 500.
       // If Assets (100) < Debt (500) -> Bankrupt. Correct.
-      
+
       // If using new system: Money is 0. PropValue is 600. TotalAssets is 600.
       // Debt is 500.
       // 600 > 500 -> Can raise funds. Correct.
@@ -1053,23 +1054,39 @@ class Game {
     const currentPlayer = this.players[this.currentPlayerIndex];
     if (!currentPlayer || !currentPlayer.isBot) return null;
 
-    // 30 second timeout for bots
-    if (Date.now() - this.turnStartTime > 30000) {
-      this.addLog(`Bot ${currentPlayer.name} timed out - skipping turn`);
+    // 45 second timeout for bots (based on last action, not just turn start)
+    // This prevents timeouts during long but active turns (like auctions)
+    const timeoutDescrip = this.auction ? 'auction' : 'turn';
+    const limitMs = this.auction ? 45000 : 30000;
+
+    if (Date.now() - this.lastActionTime > limitMs) {
+      this.addLog(`Bot ${currentPlayer.name} timed out - skipping ${timeoutDescrip}`);
+
+      // If there's an active auction, resolve it instead of destroying it
+      if (this.auction) {
+        if (this.auction.highestBidder) {
+          this.completeAuction();
+        } else {
+          this.addLog(`Auction cancelled due to timeout`);
+          this.auction = null;
+        }
+      }
 
       // Force end turn logic
       this.diceRolled = false;
       this.canRollAgain = false;
       this.pendingAction = null;
-      this.auction = null;
+      // Note: auction is already handled above
 
       this.endTurn();
       return { skipped: true, game: this.getState() };
     }
     return null;
+    return null;
   }
 
   addLog(message) {
+    this.lastActionTime = Date.now(); // Reset timeout timer on any activity
     this.gameLog.push({
       time: new Date().toISOString(),
       message: message

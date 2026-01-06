@@ -127,11 +127,11 @@ class MonopolyBot {
         this.serverUrl = serverUrl;
         this.gameId = gameId;
         this.difficulty = ['easy', 'medium', 'hard'].includes(difficulty) ? difficulty : 'hard';
-        
+
         // Get appropriate name for difficulty
         const namePool = BOT_NAMES[this.difficulty] || BOT_NAMES.hard;
         this.botName = botName || namePool[Math.floor(Math.random() * namePool.length)];
-        
+
         this.socket = null;
         this.gameState = null;
         this.myPlayer = null;
@@ -148,7 +148,7 @@ class MonopolyBot {
 
         // Load difficulty-specific configuration
         const difficultyConfig = DIFFICULTY_CONFIGS[this.difficulty];
-        
+
         // Strategy settings - merge difficulty config with base config
         this.config = {
             // Property buying
@@ -216,7 +216,7 @@ class MonopolyBot {
             'dark-blue': 4,
             'brown': 3,
         };
-        
+
         // For easy bots, flatten the ranking differences
         this.colorGroupRanking = {};
         for (const [color, value] of Object.entries(baseRanking)) {
@@ -224,7 +224,7 @@ class MonopolyBot {
             // Blend toward average (6.5) based on awareness
             this.colorGroupRanking[color] = 6.5 + (value - 6.5) * awareness;
         }
-        
+
         console.log(`[BOT ${this.botName}] Created with difficulty: ${this.difficulty.toUpperCase()}`);
     }
 
@@ -771,7 +771,7 @@ class MonopolyBot {
         const baseCashMultiplier = this.config.tradeCashMultiplier;
         const blockingMultiplier = this.config.blockingPropertyMultiplier;
         const monopolyMultiplier = this.config.monopolyGiveawayMultiplier;
-        
+
         let requiredCashMultiplier = baseCashMultiplier;
         if (wouldGiveMonopoly && isBlockingProperty) {
             requiredCashMultiplier = monopolyMultiplier + (blockingMultiplier - baseCashMultiplier);
@@ -805,7 +805,7 @@ class MonopolyBot {
         // For property swaps or mixed trades, use value-based ratio
         // Apply strategic penalties to giving value for ratio calculation (scaled by difficulty)
         let adjustedGiving = givingValue;
-        
+
         // Penalties only apply if bot recognizes blocking/monopoly value
         if (this.config.recognizesMonopolyValue && wouldGiveMonopoly) {
             adjustedGiving += totalRequestedPropertyValue * 1.5 * this.config.colorGroupAwareness;
@@ -915,7 +915,7 @@ class MonopolyBot {
     considerProposingTrade() {
         if (!this.isMyTurn || !this.gameState) return;
         if (Date.now() - this.lastTradeTime < this.config.tradeCheckInterval) return;
-        
+
         // Check if bot should propose trades based on difficulty
         if (Math.random() > this.config.proposesTradesFrequency) {
             return; // Skip proposing trades this turn
@@ -1250,17 +1250,31 @@ class MonopolyBot {
         }
 
         // Now emit all build requests with staggered delays
+        let totalDuration = 0;
+
         if (buildQueue.length > 0) {
             console.log(`[BOT ${this.botName}] Planning to build ${buildQueue.length} houses, total cost: £${spentSoFar}`);
 
+            // specific delay between builds
+            const delayPerBuild = this.config.delays?.buildHouse?.min || 500;
+
             buildQueue.forEach((build, index) => {
-                const buildDelay = this.getRandomDelay('buildHouse');
+                const actionDelay = (index + 1) * delayPerBuild;
+                totalDuration = actionDelay;
+
                 setTimeout(() => {
+                    // Check if it's still our turn before building
+                    if (!this.isMyTurn) {
+                        console.log(`[BOT ${this.botName}] Skipping build on ${build.propertyName} - no longer my turn`);
+                        return;
+                    }
                     console.log(`[BOT ${this.botName}] Building on ${build.propertyName} (${build.currentHouses} -> ${build.currentHouses + 1})`);
                     this.socket.emit('buildHouse', { gameId: this.gameId, propertyIndex: build.propIndex });
-                }, index * buildDelay);
+                }, actionDelay);
             });
         }
+
+        return totalDuration;
     }
 
 
@@ -1293,7 +1307,7 @@ class MonopolyBot {
         if (!property) return 0;
 
         let maxBid = property.price * this.config.auctionAggressiveness;
-        
+
         // Dynamic Wealth Adjustment:
         // The more money we have, the more we are willing to "overpay".
         // We add a portion of our available cash to the valuation to scale with wealth.
@@ -1341,11 +1355,11 @@ class MonopolyBot {
      */
     calculateBidReluctance(property) {
         if (!property) return 1.0;
-        
+
         // CRITICAL CHECKS (Zero Reluctance)
         // 1. Completes my monopoly
         if (this.wouldCompleteMyMonopoly(property)) return 0.0;
-        
+
         // 2. Blocks opponent monopoly
         if (this.wouldCompleteOpponentMonopoly(property)) return 0.0;
 
@@ -1353,7 +1367,7 @@ class MonopolyBot {
         const colorAnalysis = this.analyzeColorGroups();
         const playerAnalysis = this.analyzePlayerStrategies();
         const myGroupData = colorAnalysis[property.color];
-        
+
         // Base reluctance starts neutral
         let reluctance = 0.5;
 
@@ -1365,9 +1379,9 @@ class MonopolyBot {
             totalProps += g.total;
         });
         const saturation = totalUnowned / totalProps;
-        
+
         // If lots of unowned properties (early game), be eager to grab land
-        if (saturation > 0.6) reluctance -= 0.3; 
+        if (saturation > 0.6) reluctance -= 0.3;
         // If few unowned (late game), be pickier
         else if (saturation < 0.2) reluctance += 0.2;
 
@@ -1406,7 +1420,7 @@ class MonopolyBot {
 
         if (!auction || !this.myPlayer) return;
         if (auction.passedPlayers?.includes(this.myPlayer.id)) return;
-        
+
         // Don't bid if we're already the highest bidder - wait for others to act
         if (auction.highestBidder === this.myPlayer.id) {
             return;
@@ -1438,7 +1452,7 @@ class MonopolyBot {
 
         // If bid is already over our max, pass
         if (minBid > maxBid) shouldPass = true;
-        
+
         // RELUCTANCE CHECK (Dynamic probability to pass early)
         else if (reluctance > 0.0) {
             // Current Price Ratio (Current Bid / Base Price)
@@ -1446,7 +1460,7 @@ class MonopolyBot {
 
             // If we are reluctant, we might pass even if affordable
             // Higher reluctance = lower threshold to quit
-            
+
             // Example: Reluctance 0.8 (Very reluctant)
             // - If Price > 50% value, 30% chance to quit per turn
             if (reluctance > 0.7 && priceRatio > 0.5) {
@@ -1461,7 +1475,7 @@ class MonopolyBot {
 
         // Log reasoning for debugging/human-feel
         if (reluctance < 0.1) {
-             console.log(`[BOT ${this.botName}] Eager to win ${property.name}! (Reluctance: ${reluctance.toFixed(2)})`);
+            console.log(`[BOT ${this.botName}] Eager to win ${property.name}! (Reluctance: ${reluctance.toFixed(2)})`);
         }
 
         if (!shouldPass) {
@@ -1698,12 +1712,15 @@ class MonopolyBot {
             }
 
             // Build houses before ending
-            this.tryBuildHouses();
+            const buildDuration = this.tryBuildHouses();
 
-            console.log(`[BOT ${this.botName}] Ending turn`);
-            this.lastActionTime = Date.now();
-            this.socket.emit('endTurn', { gameId: this.gameId });
-            this.actionInProgress = false;
+            // Wait for builds to finish before ending turn
+            setTimeout(() => {
+                console.log(`[BOT ${this.botName}] Ending turn`);
+                this.lastActionTime = Date.now();
+                this.socket.emit('endTurn', { gameId: this.gameId });
+                this.actionInProgress = false;
+            }, buildDuration + 200); // 200ms buffer
         }, actualDelay);
     }
 
@@ -1751,7 +1768,10 @@ class MonopolyBot {
     handleBankruptcyState(action) {
         console.log(`[BOT ${this.botName}] Bankruptcy state - Money: £${this.myPlayer.money}`);
 
-        if (this.myPlayer.money >= 0) {
+        const debt = this.myPlayer.debt ? this.myPlayer.debt.amount : 0;
+
+        // Only valid to end turn if we have no debt
+        if (this.myPlayer.money >= 0 && debt === 0) {
             this.scheduleEndTurn(this.getRandomDelay('endTurn'));
             return;
         }
