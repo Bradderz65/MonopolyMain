@@ -242,6 +242,53 @@ class MonopolyBot {
         return delayConfig.min + Math.random() * (delayConfig.max - delayConfig.min);
     }
 
+    /**
+     * Calculate a dynamic reaction time based on game state and difficulty
+     * @param {string} actionType - The action type
+     * @param {Object} context - Context for the decision (property, price, etc.)
+     */
+    calculateReactionTime(actionType, context = {}) {
+        const delayConfig = this.config.delays[actionType] || { min: 1000, max: 3000 };
+        // Start with a random base within the configured range
+        let delay = delayConfig.min + Math.random() * (delayConfig.max - delayConfig.min);
+
+        // 1. Difficulty Modifier
+        // Hard bots are more decisive (faster processing)
+        // Easy bots take longer to "think"
+        if (this.difficulty === 'hard') delay *= 0.75;
+        else if (this.difficulty === 'easy') delay *= 1.25;
+
+        // 2. Game Phase Modifier
+        const phase = this.getGamePhase();
+        if (phase === 'early') delay *= 0.9; // Faster decisions in early game
+        else if (phase === 'late') delay *= 1.1; // More careful in late game
+
+        // 3. Context-Specific Modifiers
+        if (context.property) {
+            const price = context.property.price || 0;
+            const money = this.myPlayer?.money || 0;
+
+            // Financial Pressure
+            if (price > 0) {
+                const affordability = money / price;
+                if (affordability > 10) delay *= 0.6; // Pocket change - fast decision
+                else if (affordability < 1.5) delay *= 1.4; // Expensive - heavy thinking
+            }
+
+            // Strategic Excitement (if buying)
+            if (context.isBuying) {
+                // Check for monopoly completion (if bot is smart enough to know)
+                if (this.config.recognizesMonopolyValue && this.wouldCompleteMyMonopoly(context.property)) {
+                    delay *= 0.5; // Snap call for monopoly!
+                } else if (this.config.recognizesBlocking && this.wouldCompleteOpponentMonopoly(context.property)) {
+                    delay *= 0.6; // Fast block
+                }
+            }
+        }
+
+        return Math.max(500, Math.floor(delay));
+    }
+
     connect() {
         return new Promise((resolve, reject) => {
             this.socket = io(this.serverUrl, { transports: ['websocket'] });
@@ -1750,7 +1797,12 @@ class MonopolyBot {
 
     decideBuyProperty(property) {
         const shouldBuy = this.evaluateProperty(property);
-        const delay = shouldBuy ? this.getRandomDelay('buyProperty') : this.getRandomDelay('declineProperty');
+        
+        const actionType = shouldBuy ? 'buyProperty' : 'declineProperty';
+        const delay = this.calculateReactionTime(actionType, {
+            property,
+            isBuying: shouldBuy
+        });
 
         console.log(`[BOT ${this.botName}] Evaluating ${property.name}... (${Math.round(delay / 1000)}s)`);
 

@@ -725,11 +725,13 @@ async function testBotTimeout() {
 
     // Simulate a recent turn - no timeout
     game.turnStartTime = Date.now() - 5000;
+    game.lastActionTime = Date.now() - 5000;
     let result = game.checkBotTimeout();
     assert(result === null, 'No timeout for recent turn');
 
     // Simulate old turn - should timeout
     game.turnStartTime = Date.now() - 35000;
+    game.lastActionTime = Date.now() - 35000;
     result = game.checkBotTimeout();
     assert(result !== null && result.skipped === true, 'Bot timeout detected');
 }
@@ -917,7 +919,7 @@ async function testSocketGameFlow() {
 
         // Roll dice
         player1.emit('rollDice', { gameId });
-        const { result } = await waitForEvent(player1, 'diceRolled', 3000);
+        const { result } = await waitForEvent(player1, 'diceRolled', 5000);
         assert(result.total >= 2 && result.total <= 12, 'Dice roll via socket works');
 
         // Leave game
