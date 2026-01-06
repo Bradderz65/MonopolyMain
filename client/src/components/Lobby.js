@@ -127,42 +127,43 @@ function Lobby({ playerName, setPlayerName, games, createGame, joinGame, onReset
         </div>
 
         {/* Character Selection */}
-        <div className="lobby-character-selection">
-          {/* Token Selection */}
-          <div className="lobby-token-selection">
-            <div className="selection-label">Token</div>
-            <div className="token-grid">
-              {availableTokens.map((token) => (
-                <button
-                  key={token.id}
-                  onClick={() => setSelectedToken(token.id)}
-                  title={token.name}
-                  className={`token-button ${selectedToken === token.id ? 'selected' : ''}`}
-                >
-                  {token.emoji}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Color Selection */}
-          <div className="lobby-color-selection">
-            <div className="selection-label">Color</div>
-            <div className="color-grid">
-              {availableColors.map((color) => (
-                <button
-                  key={color.id}
-                  onClick={() => setSelectedColor(color.id)}
-                  title={color.name}
-                  className={`color-button ${selectedColor === color.id ? 'selected' : ''}`}
-                  style={{
-                    background: color.hex,
-                    boxShadow: selectedColor === color.id 
-                      ? `0 0 10px ${color.hex}` 
-                      : 'none'
-                  }}
-                />
-              ))}
+        <div className="lobby-character-selection" style={{ justifyContent: 'center' }}>
+          <div className="lobby-token-selection" style={{ width: '100%', maxWidth: '320px' }}>
+            <div className="selection-label">Choose Character (Tap to change color)</div>
+            <div className="token-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+              {availableTokens.map((token) => {
+                const isSelected = selectedToken === token.id;
+                // Find current color object
+                const currentColorObj = availableColors.find(c => c.id === selectedColor) || availableColors[0];
+                
+                return (
+                  <button
+                    key={token.id}
+                    onClick={() => {
+                      if (isSelected) {
+                        // Cycle color
+                        const currentIndex = availableColors.findIndex(c => c.id === selectedColor);
+                        const nextIndex = (currentIndex + 1) % availableColors.length;
+                        setSelectedColor(availableColors[nextIndex].id);
+                      } else {
+                        // Select token
+                        setSelectedToken(token.id);
+                      }
+                    }}
+                    title={isSelected ? `${token.name} (${currentColorObj.name})` : token.name}
+                    className={`token-button ${isSelected ? 'selected' : ''}`}
+                    style={{
+                      background: isSelected ? currentColorObj.hex : 'rgba(255, 255, 255, 0.1)',
+                      borderColor: isSelected ? 'white' : 'transparent',
+                      transform: isSelected ? 'scale(1.1)' : 'scale(1)',
+                      boxShadow: isSelected ? `0 0 15px ${currentColorObj.hex}66` : 'none',
+                      transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                    }}
+                  >
+                    {token.emoji}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
