@@ -154,8 +154,8 @@ function GameBoard({
     const isTap = Math.abs(distanceX) < 10 && Math.abs(distanceY) < 10;
 
     if (isTap) {
-      // Treat as tap - check for triple tap
-      handleTripleTap();
+      // Treat as tap - do nothing (let click events handle interactions)
+      // Triple tap is now restricted to the swipe bar only
     } else {
       // Check for swipe
       const isHorizontalSwipe = Math.abs(distanceX) > Math.abs(distanceY);
@@ -189,7 +189,7 @@ function GameBoard({
     touchEndY.current = null;
   };
 
-  // Handle click on swipe panel for triple tap (desktop/mouse)
+  // Handle click/tap on swipe panel (triggers triple tap detection)
   const onSwipePanelClick = () => {
     handleTripleTap();
   };
@@ -556,7 +556,10 @@ function GameBoard({
             </button>
             <button
               className={`sidebar-tab ${activeTab === 'properties' ? 'active' : ''}`}
-              onClick={() => setActiveTab('properties')}
+              onClick={() => {
+                setActiveTab('properties');
+                handleTripleTap();
+              }}
             >
               <span className="tab-icon">🏠</span>
               <span className="tab-label">Properties</span>
