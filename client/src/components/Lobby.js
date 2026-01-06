@@ -28,9 +28,7 @@ function Lobby({ playerName, setPlayerName, games, createGame, joinGame, onReset
   const [maxPlayers, setMaxPlayers] = useState(4);
   const [isPrivate, setIsPrivate] = useState(false);
   const [auctionsEnabled, setAuctionsEnabled] = useState(false);
-  const [joinCode, setJoinCode] = useState('');
   const [resetting, setResetting] = useState(false);
-  const [showJoinByCode, setShowJoinByCode] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   
   // Character selection state
@@ -91,19 +89,6 @@ function Lobby({ playerName, setPlayerName, games, createGame, joinGame, onReset
     joinGame(gameId, selectedToken, selectedColor);
   };
 
-  const handleJoinByCode = (e) => {
-    e.preventDefault();
-    if (!playerName.trim()) {
-      alert('Please enter your name first');
-      return;
-    }
-    if (!joinCode.trim()) {
-      alert('Please enter a game code');
-      return;
-    }
-    joinGame(joinCode.trim().toUpperCase(), selectedToken, selectedColor);
-  };
-
   return (
     <div className="lobby-minimal">
       <div className="lobby-minimal-content">
@@ -153,10 +138,12 @@ function Lobby({ playerName, setPlayerName, games, createGame, joinGame, onReset
                     title={isSelected ? `${token.name} (${currentColorObj.name})` : token.name}
                     className={`token-button ${isSelected ? 'selected' : ''}`}
                     style={{
-                      background: isSelected ? currentColorObj.hex : 'rgba(255, 255, 255, 0.1)',
+                      background: isSelected 
+                        ? `linear-gradient(135deg, color-mix(in srgb, ${currentColorObj.hex} 70%, transparent) 0%, color-mix(in srgb, ${currentColorObj.hex} 80%, black) 100%)`
+                        : 'rgba(255, 255, 255, 0.1)',
                       borderColor: isSelected ? 'white' : 'transparent',
                       transform: isSelected ? 'scale(1.1)' : 'scale(1)',
-                      boxShadow: isSelected ? `0 0 15px ${currentColorObj.hex}66` : 'none',
+                      boxShadow: isSelected ? `0 0 8px ${currentColorObj.hex}88` : 'none',
                       transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                     }}
                   >
@@ -213,36 +200,7 @@ function Lobby({ playerName, setPlayerName, games, createGame, joinGame, onReset
           >
             ✚ Create New Game
           </button>
-
-          <button
-            className="btn btn-secondary"
-            onClick={() => setShowJoinByCode(!showJoinByCode)}
-          >
-            🔑 Join by Code
-          </button>
         </div>
-
-        {/* Join by Code - Expandable */}
-        {showJoinByCode && (
-          <form className="lobby-code-form" onSubmit={handleJoinByCode}>
-            <input
-              type="text"
-              className="code-input-minimal"
-              placeholder="GAME CODE"
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-              maxLength={8}
-              autoFocus
-            />
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={!playerName.trim() || !joinCode.trim()}
-            >
-              Join
-            </button>
-          </form>
-        )}
 
         {/* Create Game Modal */}
         {showCreateModal && (
