@@ -71,8 +71,6 @@ function DiceDisplay({ roll, forceAnimate }) {
           ×2
         </span>
       )}
-      
-      {isRolling && <span className="rolling-text">Rolling...</span>}
     </div>
   );
 }

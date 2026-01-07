@@ -57,10 +57,9 @@ function ActionsPanel({
   };
 
   const quickBid = (increment) => {
+    if (!gameState.auction || !myPlayer) return;
     const newBid = (gameState.auction?.currentBid || 0) + increment;
-    if (newBid <= myPlayer.money) {
-      placeBid(newBid);
-    }
+    placeBid(newBid);
   };
 
   useEffect(() => {

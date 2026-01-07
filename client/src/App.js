@@ -410,9 +410,10 @@ function App() {
 
                 // Process any pending landing result
                 if (pendingLandingResult) {
+                  const queuedLandingResult = pendingLandingResult;
+                  pendingLandingResult = null;
                   setTimeout(() => {
-                    handleLandingResult(pendingLandingResult.result, pendingLandingResult.game);
-                    pendingLandingResult = null;
+                    handleLandingResult(queuedLandingResult.result, queuedLandingResult.game);
                   }, 100);
                 }
 

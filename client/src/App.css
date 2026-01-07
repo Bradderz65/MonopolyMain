@@ -2409,6 +2409,7 @@
   background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   flex-shrink: 0;
+  max-width: 100%;
 }
 
 .dice-mini .die {
@@ -2424,6 +2425,7 @@
   font-size: 1.4rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   transition: transform 0.1s ease;
+  flex: 0 0 44px;
 }
 
 .dice-mini .die.shake {
@@ -2435,7 +2437,13 @@
   font-size: 0.9rem;
   font-style: italic;
   font-weight: 500;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
 
 @media (max-width: 600px) {
   .dice-mini .rolling-text {
@@ -2462,6 +2470,8 @@
   color: #4ecdc4;
   font-size: 1.2rem;
   margin-left: 6px;
+  min-width: 3.25ch;
+  flex: 0 0 auto;
 }
 
 .dice-mini .doubles {
@@ -2472,6 +2482,9 @@
   padding: 4px 10px;
   border-radius: 6px;
   animation: pulseDoubles 1s ease-in-out infinite;
+  min-width: 2.5ch;
+  text-align: center;
+  flex: 0 0 auto;
 }
 
 @keyframes pulseDoubles {

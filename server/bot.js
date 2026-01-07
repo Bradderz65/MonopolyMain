@@ -190,6 +190,7 @@ class MonopolyBot {
             // Humanized delay ranges
             delays: {
                 rollDice: { min: 500, max: 1500 },
+                rollAgain: { min: 900, max: 2000 },
                 buyProperty: { min: 1000, max: 3000 },
                 declineProperty: { min: 1000, max: 2500 },
                 auctionBid: { min: 500, max: 2000 },
@@ -199,6 +200,7 @@ class MonopolyBot {
                 buildHouse: { min: 300, max: 800 },
                 jailDecision: { min: 1500, max: 4000 },
                 endTurn: { min: 500, max: 1500 },
+                turnStart: { min: 700, max: 1600 },
                 postLanding: { min: 1000, max: 2500 },
                 sellAsset: { min: 500, max: 1500 },
             },
@@ -385,7 +387,13 @@ class MonopolyBot {
         this.socket.on('turnEnded', ({ game }) => {
             this.updateGameState(game);
             this.actionInProgress = false;
-            this.checkAndTakeTurn();
+            if (this.isMyTurn) {
+                const delay = this.getRandomDelay('turnStart');
+                console.log(`[BOT ${this.botName}] Starting turn in ${Math.round(delay / 1000)}s`);
+                setTimeout(() => this.checkAndTakeTurn(), delay);
+            } else {
+                this.checkAndTakeTurn();
+            }
         });
 
         this.socket.on('jailFinePaid', ({ game }) => {
@@ -1529,8 +1537,14 @@ class MonopolyBot {
             // Strategic bid increment
             let bidAmount = minBid;
 
-            // Small random increment to seem more human
-            const increment = Math.floor(Math.random() * 15) + 5;
+            // Bigger jumps when highly motivated and far from limit
+            const headroom = Math.max(0, maxBid - minBid);
+            const eagerness = Math.max(0, 1 - reluctance);
+            const baseJump = Math.floor(property.price * (0.02 + eagerness * 0.08));
+            const maxJump = Math.max(8, Math.min(headroom, baseJump + Math.floor(headroom * (0.15 + eagerness * 0.25))));
+            const minJump = Math.min(maxJump, Math.max(5, Math.floor(maxJump * 0.4)));
+            const increment = minJump + Math.floor(Math.random() * (maxJump - minJump + 1));
+
             bidAmount = Math.min(minBid + increment, maxBid);
 
             const bidDelay = this.getRandomDelay('auctionBid');
@@ -1717,7 +1731,7 @@ class MonopolyBot {
         if (this.gameState.pendingAction) {
             this.handlePendingAction();
         } else if (this.gameState.canRollAgain && !this.myPlayer.inJail) {
-            const delay = this.getRandomDelay('rollDice');
+            const delay = this.getRandomDelay('rollAgain');
             console.log(`[BOT ${this.botName}] Rolling again... (${Math.round(delay / 1000)}s)`);
             setTimeout(() => this.rollDice(), delay);
         } else {
@@ -1754,7 +1768,9 @@ class MonopolyBot {
             }
 
             if (this.gameState.canRollAgain && !this.myPlayer.inJail) {
-                this.rollDice();
+                const delay = this.getRandomDelay('rollAgain');
+                console.log(`[BOT ${this.botName}] Rolling again... (${Math.round(delay / 1000)}s)`);
+                setTimeout(() => this.rollDice(), delay);
                 return;
             }
 

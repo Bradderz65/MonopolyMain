@@ -417,13 +417,16 @@ io.on('connection', (socket) => {
   });
 
   socket.on('rollDice', ({ gameId }) => {
-    console.log(`[SERVER] rollDice called by ${socket.id} for game ${gameId}`);
     const game = gameManager.getGame(gameId);
     if (!game || !game.started) {
       console.log('[SERVER] rollDice rejected: game not found or not started');
       return;
     }
     const player = game.getPlayer(socket.id);
+    const turnLabel = `Turn ${game.currentPlayerIndex + 1}/${game.players.length}`;
+    const turnPlayer = game.players[game.currentPlayerIndex];
+    const playerType = player?.isBot ? 'BOT' : 'HUMAN';
+    console.log(`[SERVER] rollDice called by ${player?.name || socket.id} (${playerType}) for game ${gameId} - ${turnLabel} (${turnPlayer?.name || 'unknown'})`);
     if (!player || game.currentPlayerIndex !== game.players.indexOf(player)) {
       console.log('[SERVER] rollDice rejected: not player\'s turn');
       socket.emit('error', { message: 'Not your turn' });
@@ -460,7 +463,7 @@ io.on('connection', (socket) => {
     game.rollCooldownPlayerId = player.id;
     game.rollCooldownUntil = now + 1200;
     const result = game.rollDice();
-    console.log(`[SERVER] rollDice SUCCESS for ${player.name}: ${result.die1} + ${result.die2} = ${result.total}`);
+    console.log(`[SERVER] rollDice SUCCESS for ${player.name}: ${result.die1} + ${result.die2} = ${result.total} - ${turnLabel}`);
     io.to(game.id).emit('diceRolled', { result, game: game.getState() });
 
     // Handle landing on space
@@ -714,13 +717,15 @@ io.on('connection', (socket) => {
   });
 
   socket.on('endTurn', ({ gameId }) => {
-    console.log(`[SERVER] endTurn called by ${socket.id} for game ${gameId}`);
     const game = gameManager.getGame(gameId);
     if (!game || !game.started) {
       console.log(`[SERVER] endTurn rejected: game not found or not started`);
       return;
     }
     const player = game.getPlayer(socket.id);
+    const turnLabel = `Turn ${game.currentPlayerIndex + 1}/${game.players.length}`;
+    const playerType = player?.isBot ? 'BOT' : 'HUMAN';
+    console.log(`[SERVER] endTurn called by ${player?.name || socket.id} (${playerType}) for game ${gameId} - ${turnLabel}`);
     if (!player) {
       console.log(`[SERVER] endTurn rejected: player not found for socket ${socket.id}`);
       return;
@@ -748,6 +753,9 @@ io.on('connection', (socket) => {
     }
     console.log(`[SERVER] endTurn SUCCESS for ${player.name}, advancing turn`);
     game.endTurn();
+    const nextPlayer = game.players[game.currentPlayerIndex];
+    const nextTurnLabel = `Turn ${game.currentPlayerIndex + 1}/${game.players.length}`;
+    console.log(`[SERVER] next turn: ${nextPlayer?.name || 'unknown'} (${nextPlayer?.isBot ? 'BOT' : 'HUMAN'}) - ${nextTurnLabel}`);
     io.to(game.id).emit('turnEnded', { game: game.getState() });
   });
 

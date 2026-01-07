@@ -222,6 +222,12 @@ function GameBoard({
     return gameState.players.find(p => p.id === currentPlayer.id);
   }, [gameState, currentPlayer]);
 
+  const getDisplayMoney = (player) => {
+    if (!player) return 0;
+    if (player.debt?.amount > 0) return -player.debt.amount;
+    return player.money;
+  };
+
   const isMyTurn = useMemo(() => {
     if (!gameState || !myPlayer) return false;
     return gameState.currentPlayerIndex === gameState.players.indexOf(myPlayer);
@@ -492,14 +498,14 @@ function GameBoard({
               <div
                 key={player.id}
                 className={`player-chip ${idx === gameState.currentPlayerIndex ? 'active' : ''} ${player.bankrupt ? 'out' : ''}`}
-                title={`${player.name}: £${player.money.toLocaleString()}${player.inJail ? ' (Jail)' : ''}`}
+                title={`${player.name}: £${getDisplayMoney(player).toLocaleString()}${player.inJail ? ' (Jail)' : ''}`}
                 style={{
                   '--player-color': player.color,
                   borderLeft: `3px solid ${player.color}`
                 }}
               >
                 <span className="chip-token">{player.token}</span>
-                <span className="chip-money">£{player.money.toLocaleString()}</span>
+                <span className="chip-money">£{getDisplayMoney(player).toLocaleString()}</span>
                 {player.inJail && <span className="chip-jail">🔒</span>}
               </div>
             ))}

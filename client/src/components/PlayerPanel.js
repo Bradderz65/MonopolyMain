@@ -33,6 +33,12 @@ function PlayerPanel({
   const showOwnerDotControls = typeof onDecreaseOwnerDotScale === 'function' && typeof onIncreaseOwnerDotScale === 'function';
   const ownerDotLabel = ownerDotScale === 0 ? 'Off' : `${Math.round((ownerDotScale || 1) * 100)}%`;
 
+  const getDisplayMoney = (player) => {
+    if (!player) return 0;
+    if (player.debt?.amount > 0) return -player.debt.amount;
+    return player.money;
+  };
+
   return (
     <div className="players-panel">
       {showOwnerDotControls && (
@@ -72,7 +78,7 @@ function PlayerPanel({
                 {player.name}
                 {player.id === myPlayerId && ' (You)'}
               </div>
-              <div className="player-money">£{player.money.toLocaleString()}</div>
+              <div className="player-money">£{getDisplayMoney(player).toLocaleString()}</div>
             </div>
             {player.inJail && <span className="player-status in-jail">In Jail</span>}
             {player.disconnected && <span className="player-status disconnected">Offline</span>}
