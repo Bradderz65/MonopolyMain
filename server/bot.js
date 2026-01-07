@@ -1503,6 +1503,7 @@ class MonopolyBot {
         // Calculate max bid using isolated logic (easier to test)
         const maxBid = this.calculateAuctionLimit(property);
         const reluctance = this.calculateBidReluctance(property);
+        const priceRatio = minBid / property.price;
 
         // DECISION LOGIC
         let shouldPass = false;
@@ -1512,9 +1513,6 @@ class MonopolyBot {
 
         // RELUCTANCE CHECK (Dynamic probability to pass early)
         else if (reluctance > 0.0) {
-            // Current Price Ratio (Current Bid / Base Price)
-            const priceRatio = minBid / property.price;
-
             // If we are reluctant, we might pass even if affordable
             // Higher reluctance = lower threshold to quit
 

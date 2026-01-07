@@ -444,6 +444,48 @@ async function testAuctionDecisions() {
     assert(limit5 <= bot.myPlayer.money - bot.config.minCashReserve,
         'Auction limit respects cash reserve',
         `Got £${limit5}, have £${bot.myPlayer.money}, reserve £${bot.config.minCashReserve}`);
+
+    // Test 6: Bluff Caller Logic (Anti-Shill)
+    resetMockGameOwnership(mockGame);
+    bot.myPlayer.money = 5000; // Rich bot
+    bot.myPlayer.properties = [];
+    const junkProp = mockGame.board[1]; // Old Kent Road (£60)
+    
+    // Mock auction state where price is inflated (e.g., £75 = 125% value)
+    // Bot limit is likely ~£90+ due to wealth, so it CAN afford it.
+    // We want to see if it bails out due to "Bluff Caller" logic.
+    let bailCount = 0;
+    const trials = 50;
+
+    // We need to spy on socket.emit to detect 'auctionPass'
+    let lastAction = null;
+    bot.socket = { 
+        emit: (event) => { lastAction = event; },
+        on: () => {} 
+    };
+    bot.gameId = 'TEST_BLUFF';
+    bot.scheduleAuctionTimer = (cb) => cb(); // Run immediately
+
+    for(let i=0; i<trials; i++) {
+        lastAction = null;
+        bot.gameState.auction = {
+            property: junkProp,
+            currentBid: 75, // 125% of £60
+            minimumBid: 76,
+            highestBidder: 'other-player',
+            participants: ['bot-id', 'other-player'],
+            passedPlayers: []
+        };
+        bot.handleAuction(bot.gameState.auction);
+        if (lastAction === 'auctionPass') bailCount++;
+    }
+
+    assert(bailCount > 0, 
+        'Bot calls bluff on overpriced property', 
+        `Bot never bailed out in ${trials} trials despite high price`);
+    
+    // Restore socket
+    bot.socket = null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
