@@ -731,16 +731,44 @@ class MonopolyBot {
                 // Clear decline history on accept
                 this.receivedTradeHistory.delete(historyKey);
             } else {
-                console.log(`[BOT ${this.botName}] Declining trade (value ratio: ${evaluation.ratio.toFixed(2)}, reason: ${evaluation.reason})`);
-                this.socket.emit('declineTrade', { gameId: this.gameId, tradeId: trade.id });
+                // Try to generate a counter-offer before declining
+                const counterOffer = this.generateCounterOffer(trade, evaluation);
 
-                // Track declined trade
-                const current = this.receivedTradeHistory.get(historyKey) || { count: 0 };
-                this.receivedTradeHistory.set(historyKey, {
-                    count: current.count + 1,
-                    timestamp: Date.now(),
-                    lastOffer: trade.offer?.money || 0
-                });
+                if (counterOffer) {
+                    console.log(`[BOT ${this.botName}] Proposing counter-offer instead of declining`);
+                    // Decline the original trade
+                    this.socket.emit('declineTrade', { gameId: this.gameId, tradeId: trade.id });
+
+                    // Send counter-offer after a short delay
+                    setTimeout(() => {
+                        this.socket.emit('proposeTrade', {
+                            gameId: this.gameId,
+                            targetPlayerId: counterOffer.targetPlayerId,
+                            offer: counterOffer.offer,
+                            request: counterOffer.request
+                        });
+                    }, this.getRandomDelay('proposeTrade'));
+
+                    // Track as counter-offer (don't increment decline count as aggressively)
+                    const current = this.receivedTradeHistory.get(historyKey) || { count: 0 };
+                    this.receivedTradeHistory.set(historyKey, {
+                        count: current.count + 0.5, // Half-increment for counters
+                        timestamp: Date.now(),
+                        lastOffer: trade.offer?.money || 0,
+                        wasCountered: true
+                    });
+                } else {
+                    console.log(`[BOT ${this.botName}] Declining trade (value ratio: ${evaluation.ratio.toFixed(2)}, reason: ${evaluation.reason})`);
+                    this.socket.emit('declineTrade', { gameId: this.gameId, tradeId: trade.id });
+
+                    // Track declined trade
+                    const current = this.receivedTradeHistory.get(historyKey) || { count: 0 };
+                    this.receivedTradeHistory.set(historyKey, {
+                        count: current.count + 1,
+                        timestamp: Date.now(),
+                        lastOffer: trade.offer?.money || 0
+                    });
+                }
             }
         }, tradeDelay);
     }
@@ -962,6 +990,74 @@ class MonopolyBot {
             }
         }
         return false;
+    }
+
+    /**
+     * Generate a counter-offer for a trade that's close but not acceptable
+     * @param {Object} trade - The original trade proposal
+     * @param {Object} evaluation - The result from evaluateTradeAdvanced
+     * @returns {Object|null} Counter-offer terms or null if no reasonable counter possible
+     */
+    generateCounterOffer(trade, evaluation) {
+        // Only counter if the trade is "close" - ratio between 0.6 and 0.9
+        // Below 0.6 is too bad to counter, above 0.9 would have been accepted
+        if (evaluation.ratio < 0.6 || evaluation.ratio >= 0.9) {
+            return null;
+        }
+
+        // Don't counter if it would give opponent a monopoly (no amount of money fixes that strategically)
+        const requestedProps = trade.request?.properties || [];
+        for (const propIndex of requestedProps) {
+            const property = this.gameState.board[propIndex];
+            if (this.wouldGiveOpponentMonopoly(property)) {
+                console.log(`[BOT ${this.botName}] Won't counter - would give opponent monopoly`);
+                return null;
+            }
+        }
+
+        // Calculate what we need to make this trade acceptable
+        // Target ratio is 1.0 (fair trade) plus a small premium for our trouble
+        const targetRatio = 1.05;
+        const currentReceiving = evaluation.receivingValue;
+        const currentGiving = evaluation.givingValue;
+
+        // How much more do we need to receive?
+        const neededValue = Math.floor(currentGiving * targetRatio);
+        const valueGap = neededValue - currentReceiving;
+
+        if (valueGap <= 0) {
+            // Trade is actually fine, this shouldn't happen but handle it
+            return null;
+        }
+
+        // Check if the other player likely has enough money
+        const otherPlayer = this.gameState.players.find(p => p.id === trade.from);
+        if (!otherPlayer || valueGap > otherPlayer.money * 0.8) {
+            // They probably can't afford our counter
+            console.log(`[BOT ${this.botName}] Won't counter - gap of £${valueGap} too large for ${otherPlayer?.name}`);
+            return null;
+        }
+
+        // Create counter-offer: we give them what they wanted, but request more money
+        // Their original offer was trade.offer.money - we need them to pay MORE
+        const originalOfferMoney = trade.offer?.money || 0;
+        const newRequestedMoney = originalOfferMoney + valueGap;
+
+        console.log(`[BOT ${this.botName}] Generating counter-offer: requesting £${newRequestedMoney} instead of £${originalOfferMoney} (gap: £${valueGap})`);
+
+        return {
+            targetPlayerId: trade.from,
+            offer: {
+                properties: trade.request?.properties || [], // We give them the properties they wanted
+                money: 0, // We don't pay them money in the counter
+                jailCards: trade.request?.jailCards || 0
+            },
+            request: {
+                properties: trade.offer?.properties || [], // We get any properties they offered
+                money: newRequestedMoney, // We request the improved money amount
+                jailCards: trade.offer?.jailCards || 0
+            }
+        };
     }
 
     /**
@@ -1536,16 +1632,16 @@ class MonopolyBot {
         if (!shouldPass && reluctance > 0.0 && priceRatio > 1.15) {
             // 15% chance to bail if price is > 115% value
             if (Math.random() < 0.15) {
-                 console.log(`[BOT ${this.botName}] Calling bluff! Price high, letting opponent overpay.`);
-                 shouldPass = true;
+                console.log(`[BOT ${this.botName}] Calling bluff! Price high, letting opponent overpay.`);
+                shouldPass = true;
             }
         }
         if (!shouldPass && reluctance > 0.0 && priceRatio > 1.6) {
-             // 35% chance to bail if price is > 160% value (even if we are rich/bully)
-             if (Math.random() < 0.35) {
-                  console.log(`[BOT ${this.botName}] Calling bluff! Way too high.`);
-                  shouldPass = true;
-             }
+            // 35% chance to bail if price is > 160% value (even if we are rich/bully)
+            if (Math.random() < 0.35) {
+                console.log(`[BOT ${this.botName}] Calling bluff! Way too high.`);
+                shouldPass = true;
+            }
         }
 
         // Log reasoning for debugging/human-feel
@@ -1794,6 +1890,13 @@ class MonopolyBot {
                 return;
             }
 
+            // Consider unmortgaging properties if we have excess cash
+            if (this.considerUnmortgagingProperties()) {
+                // Unmortgage was triggered, reschedule end turn to allow it to complete
+                setTimeout(() => this.scheduleEndTurn(500), 500);
+                return;
+            }
+
             // Build houses before ending
             const buildDuration = this.tryBuildHouses();
 
@@ -1833,7 +1936,7 @@ class MonopolyBot {
 
     decideBuyProperty(property) {
         const shouldBuy = this.evaluateProperty(property);
-        
+
         const actionType = shouldBuy ? 'buyProperty' : 'declineProperty';
         const delay = this.calculateReactionTime(actionType, {
             property,
@@ -1885,19 +1988,13 @@ class MonopolyBot {
             }
         }
 
-        // Mortgage properties (least valuable first)
-        // Use board state to find properties we actually own (most reliable source)
-        const ownedOnBoard = this.gameState.board.filter(
-            space => space.owner === this.myPlayer.id && !space.mortgaged && (space.houses || 0) === 0
-        );
+        // Mortgage properties using smart priority (lowest priority = mortgage first)
+        const mortgageable = this.getMortgagePriority();
 
-        const unmortgaged = ownedOnBoard
-            .sort((a, b) => (a.price || 0) - (b.price || 0));
-
-        if (unmortgaged.length > 0) {
-            const prop = unmortgaged[0];
+        if (mortgageable.length > 0) {
+            const prop = mortgageable[0]; // Lowest priority property
             const propIndex = prop.index !== undefined ? prop.index : this.gameState.board.indexOf(prop);
-            console.log(`[BOT ${this.botName}] Mortgaging ${prop.name} (index ${propIndex})`);
+            console.log(`[BOT ${this.botName}] Mortgaging ${prop.name} (priority: ${prop._mortgagePriority?.toFixed(0)}, index ${propIndex})`);
             this.socket.emit('mortgageProperty', { gameId: this.gameId, propertyIndex: propIndex });
             return;
         }
@@ -1906,6 +2003,165 @@ class MonopolyBot {
         console.log(`[BOT ${this.botName}] Declaring bankruptcy`);
         this.socket.emit('declareBankruptcy', { gameId: this.gameId });
         this.actionInProgress = false;
+    }
+
+    /**
+     * Get properties sorted by mortgage priority (lowest = mortgage first)
+     * Considers: blocking value, monopoly pieces, color ranking, price, synergy
+     * @returns {Array} Properties sorted by priority (ascending - lowest first)
+     */
+    getMortgagePriority() {
+        const ownedOnBoard = this.gameState.board.filter(
+            space => space.owner === this.myPlayer.id && !space.mortgaged && (space.houses || 0) === 0
+        );
+
+        // Calculate priority score for each property
+        const scored = ownedOnBoard.map(prop => {
+            let priority = 0;
+            const propIndex = prop.index !== undefined ? prop.index : this.gameState.board.indexOf(prop);
+
+            // Base price factor (lower price = lower priority = mortgage first)
+            // Scale: £60 = 6 points, £400 = 40 points
+            priority += (prop.price || 0) / 10;
+
+            // Blocking value - if this blocks an opponent's monopoly, keep it!
+            if (this.config.recognizesBlocking) {
+                const blocking = this.findBlockingProperties().find(b =>
+                    (b.property.index !== undefined ? b.property.index : this.gameState.board.indexOf(b.property)) === propIndex
+                );
+                if (blocking) {
+                    priority += 50; // Strong incentive to keep blocking properties
+                    console.log(`[BOT ${this.botName}] ${prop.name} blocks opponent monopoly (+50 priority)`);
+                }
+            }
+
+            // Monopoly piece - if I'm close to completing this color group, keep it
+            if (this.config.recognizesMonopolyValue && prop.color) {
+                const colorGroup = this.gameState.board.filter(s => s.color === prop.color);
+                const myCount = colorGroup.filter(s => s.owner === this.myPlayer.id).length;
+                const unowned = colorGroup.filter(s => s.owner === null).length;
+
+                if (myCount === colorGroup.length) {
+                    // Complete monopoly - highest priority to keep
+                    priority += 60;
+                } else if (myCount === colorGroup.length - 1 && unowned === 1) {
+                    // One away with one unowned - good potential
+                    priority += 40;
+                } else if (myCount >= 2) {
+                    // Have multiple in group
+                    priority += 20;
+                }
+            }
+
+            // Color group ranking bonus
+            const colorRank = this.colorGroupRanking[prop.color] || 0;
+            priority += colorRank * 2; // 0-20 points based on tier
+
+            // Railroad synergy
+            if (prop.type === 'railroad') {
+                const myRailroads = this.gameState.board.filter(
+                    s => s.type === 'railroad' && s.owner === this.myPlayer.id
+                ).length;
+                priority += myRailroads * 15; // More railroads = more value
+            }
+
+            // Utility synergy
+            if (prop.type === 'utility') {
+                const myUtilities = this.gameState.board.filter(
+                    s => s.type === 'utility' && s.owner === this.myPlayer.id
+                ).length;
+                priority += myUtilities * 10;
+            }
+
+            prop._mortgagePriority = priority;
+            return prop;
+        });
+
+        // Sort by priority ascending (lowest priority = mortgage first)
+        return scored.sort((a, b) => a._mortgagePriority - b._mortgagePriority);
+    }
+
+    /**
+     * Consider unmortgaging properties when we have excess cash
+     * Prioritizes: monopoly completion, high-value properties, income potential
+     */
+    considerUnmortgagingProperties() {
+        if (!this.gameState || !this.myPlayer) return;
+
+        // Find mortgaged properties we own
+        const mortgaged = this.gameState.board.filter(
+            space => space.owner === this.myPlayer.id && space.mortgaged
+        );
+
+        if (mortgaged.length === 0) return;
+
+        // Calculate priority for unmortgaging (higher = unmortgage first)
+        const prioritized = mortgaged.map(prop => {
+            let priority = 0;
+            const unmortgageCost = Math.floor((prop.mortgage || prop.price / 2) * 1.1);
+
+            // Can we afford it with reserves?
+            if (this.myPlayer.money < unmortgageCost + this.config.minCashReserve) {
+                prop._unmortgagePriority = -1; // Can't afford
+                prop._unmortgageCost = unmortgageCost;
+                return prop;
+            }
+
+            // Monopoly completion - highest priority
+            if (prop.color) {
+                const colorGroup = this.gameState.board.filter(s => s.color === prop.color);
+                const myOwned = colorGroup.filter(s => s.owner === this.myPlayer.id);
+                const myUnmortgaged = myOwned.filter(s => !s.mortgaged);
+
+                if (myOwned.length === colorGroup.length && myUnmortgaged.length === myOwned.length - 1) {
+                    // This is the last mortgaged property in a complete monopoly!
+                    priority += 100;
+                    console.log(`[BOT ${this.botName}] Unmortgaging ${prop.name} would complete buildable monopoly!`);
+                } else if (myOwned.length === colorGroup.length) {
+                    // Part of complete monopoly
+                    priority += 60;
+                }
+            }
+
+            // High-value colors
+            const colorRank = this.colorGroupRanking[prop.color] || 0;
+            priority += colorRank * 3;
+
+            // Railroad synergy
+            if (prop.type === 'railroad') {
+                const myRailroads = this.gameState.board.filter(
+                    s => s.type === 'railroad' && s.owner === this.myPlayer.id && !s.mortgaged
+                ).length;
+                priority += (myRailroads + 1) * 10; // Each unmortgaged railroad increases value
+            }
+
+            // Utility synergy
+            if (prop.type === 'utility') {
+                const myUtilities = this.gameState.board.filter(
+                    s => s.type === 'utility' && s.owner === this.myPlayer.id && !s.mortgaged
+                ).length;
+                priority += (myUtilities + 1) * 8;
+            }
+
+            prop._unmortgagePriority = priority;
+            prop._unmortgageCost = unmortgageCost;
+            return prop;
+        });
+
+        // Sort by priority descending (highest first), filter out unaffordable
+        const affordable = prioritized
+            .filter(p => p._unmortgagePriority > 0)
+            .sort((a, b) => b._unmortgagePriority - a._unmortgagePriority);
+
+        if (affordable.length > 0) {
+            const prop = affordable[0];
+            const propIndex = prop.index !== undefined ? prop.index : this.gameState.board.indexOf(prop);
+            console.log(`[BOT ${this.botName}] Unmortgaging ${prop.name} (priority: ${prop._unmortgagePriority}, cost: £${prop._unmortgageCost})`);
+            this.socket.emit('unmortgageProperty', { gameId: this.gameId, propertyIndex: propIndex });
+            return true;
+        }
+
+        return false;
     }
 
     disconnect() {

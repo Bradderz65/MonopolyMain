@@ -110,7 +110,7 @@ function createMockGame() {
 function createBot(difficulty = 'hard') {
     const MonopolyBot = require('./bot');
     const bot = new MonopolyBot(SERVER_URL, 'TEST', null, difficulty);
-    bot.socket = { id: 'bot-id', emit: () => {} };
+    bot.socket = { id: 'bot-id', emit: () => { } };
     return bot;
 }
 
@@ -315,9 +315,9 @@ async function testNegotiationStrategy() {
         const multiplier = offerAmount / targetProp.price;
         console.log(`  Attempt ${attempt}: £${offerAmount} (${multiplier.toFixed(2)}x base value)`);
 
-    testResults.negotiationDecisions.push({
+        testResults.negotiationDecisions.push({
             attempt, offered: offerAmount, multiplier
-    });
+        });
     }
 
     assert(allIncreasing, 'Offers increase with each rejection');
@@ -450,7 +450,7 @@ async function testAuctionDecisions() {
     bot.myPlayer.money = 5000; // Rich bot
     bot.myPlayer.properties = [];
     const junkProp = mockGame.board[1]; // Old Kent Road (£60)
-    
+
     // Mock auction state where price is inflated (e.g., £75 = 125% value)
     // Bot limit is likely ~£90+ due to wealth, so it CAN afford it.
     // We want to see if it bails out due to "Bluff Caller" logic.
@@ -459,14 +459,14 @@ async function testAuctionDecisions() {
 
     // We need to spy on socket.emit to detect 'auctionPass'
     let lastAction = null;
-    bot.socket = { 
+    bot.socket = {
         emit: (event) => { lastAction = event; },
-        on: () => {} 
+        on: () => { }
     };
     bot.gameId = 'TEST_BLUFF';
     bot.scheduleAuctionTimer = (cb) => cb(); // Run immediately
 
-    for(let i=0; i<trials; i++) {
+    for (let i = 0; i < trials; i++) {
         lastAction = null;
         bot.gameState.auction = {
             property: junkProp,
@@ -480,10 +480,10 @@ async function testAuctionDecisions() {
         if (lastAction === 'auctionPass') bailCount++;
     }
 
-    assert(bailCount > 0, 
-        'Bot calls bluff on overpriced property', 
+    assert(bailCount > 0,
+        'Bot calls bluff on overpriced property',
         `Bot never bailed out in ${trials} trials despite high price`);
-    
+
     // Restore socket
     bot.socket = null;
 }
@@ -565,7 +565,7 @@ async function testJailDecisions() {
     bot.myPlayer.jailTurns = 0;
     bot.myPlayer.getOutOfJailCards = 1;
     bot.myPlayer.money = 500;
-    
+
     const hasCard = bot.myPlayer.getOutOfJailCards > 0;
     assert(hasCard, 'Bot should use jail card when available');
 
@@ -1051,12 +1051,12 @@ async function testDifficultyLevels() {
     console.log('  [Trade Acceptance Thresholds]');
     {
         const mockGame = createMockGame();
-        
+
         // Create a slightly unfair trade (bot gives more than receives)
         // Old Kent Road (price 60) for £50 cash - a bad trade
         mockGame.board[1].owner = 'bot-id';
         mockGame.players[0].properties = [mockGame.board[1]];
-        
+
         const unfairTrade = {
             from: 'player2-id',
             to: 'bot-id',
@@ -1069,13 +1069,13 @@ async function testDifficultyLevels() {
         easyBot.gameState.board[1].owner = 'bot-id';
         easyBot.myPlayer = easyBot.gameState.players[0];
         easyBot.myPlayer.properties = [easyBot.gameState.board[1]];
-        
+
         const mediumBot = createBotWithDifficulty('medium');
         mediumBot.gameState = createMockGame();
         mediumBot.gameState.board[1].owner = 'bot-id';
         mediumBot.myPlayer = mediumBot.gameState.players[0];
         mediumBot.myPlayer.properties = [mediumBot.gameState.board[1]];
-        
+
         const hardBot = createBotWithDifficulty('hard');
         hardBot.gameState = createMockGame();
         hardBot.gameState.board[1].owner = 'bot-id';
@@ -1091,8 +1091,8 @@ async function testDifficultyLevels() {
         console.log(`     Hard Bot:   ${hardResult.shouldAccept ? '✅ ACCEPTS' : '❌ DECLINES'} (threshold: ${hardBot.config.tradeAcceptThreshold})`);
 
         // Easy should be more likely to accept bad trades
-        const easyAcceptsMore = easyBot.config.tradeAcceptThreshold < hardBot.config.tradeAcceptThreshold || 
-                                 easyBot.config.tradeCashMultiplier < hardBot.config.tradeCashMultiplier;
+        const easyAcceptsMore = easyBot.config.tradeAcceptThreshold < hardBot.config.tradeAcceptThreshold ||
+            easyBot.config.tradeCashMultiplier < hardBot.config.tradeCashMultiplier;
         assert(easyAcceptsMore, 'Easy bot has lower trade requirements than hard');
     }
 
@@ -1107,10 +1107,10 @@ async function testDifficultyLevels() {
         console.log(`     Medium: buyThreshold=${mediumBot.config.buyPropertyThreshold}, reserve=£${mediumBot.config.minCashReserve}`);
         console.log(`     Hard:   buyThreshold=${hardBot.config.buyPropertyThreshold}, reserve=£${hardBot.config.minCashReserve}`);
 
-        assert(easyBot.config.buyPropertyThreshold < hardBot.config.buyPropertyThreshold, 
-              'Easy bot buys more aggressively (lower threshold)');
+        assert(easyBot.config.buyPropertyThreshold < hardBot.config.buyPropertyThreshold,
+            'Easy bot buys more aggressively (lower threshold)');
         assert(easyBot.config.minCashReserve < hardBot.config.minCashReserve,
-              'Easy bot keeps less cash reserve');
+            'Easy bot keeps less cash reserve');
     }
 
     // Test 3: Auction bidding variance
@@ -1125,9 +1125,9 @@ async function testDifficultyLevels() {
         console.log(`     Hard:   aggression=${hardBot.config.auctionAggressiveness}, randomness=${hardBot.config.auctionRandomness}`);
 
         assert(easyBot.config.auctionRandomness > hardBot.config.auctionRandomness,
-              'Easy bot has more bid randomness (less optimal)');
+            'Easy bot has more bid randomness (less optimal)');
         assert(hardBot.config.auctionAggressiveness > easyBot.config.auctionAggressiveness,
-              'Hard bot is more aggressive in auctions');
+            'Hard bot is more aggressive in auctions');
     }
 
     // Test 4: Strategic awareness
@@ -1158,9 +1158,9 @@ async function testDifficultyLevels() {
         console.log(`     Hard:   jailPayThreshold=£${hardBot.config.jailPayThreshold}, jailStayLateGame=${hardBot.config.jailStayLateGame}`);
 
         assert(easyBot.config.jailPayThreshold < hardBot.config.jailPayThreshold,
-              'Easy bot pays jail fine with less money (suboptimal)');
+            'Easy bot pays jail fine with less money (suboptimal)');
         assert(!easyBot.config.jailStayLateGame && hardBot.config.jailStayLateGame,
-              'Only hard bot uses late-game jail staying strategy');
+            'Only hard bot uses late-game jail staying strategy');
     }
 
     // Test 6: Blocking property premium
@@ -1175,9 +1175,9 @@ async function testDifficultyLevels() {
         console.log(`     Hard:   blockingMultiplier=${hardBot.config.blockingPropertyMultiplier}x, monopolyMultiplier=${hardBot.config.monopolyGiveawayMultiplier}x`);
 
         assert(easyBot.config.blockingPropertyMultiplier < hardBot.config.blockingPropertyMultiplier,
-              'Easy bot demands less for blocking properties');
+            'Easy bot demands less for blocking properties');
         assert(easyBot.config.monopolyGiveawayMultiplier < hardBot.config.monopolyGiveawayMultiplier,
-              'Easy bot demands less for monopoly-completing trades');
+            'Easy bot demands less for monopoly-completing trades');
     }
 
     // Test 7: Color group awareness (affects property valuation)
@@ -1215,7 +1215,7 @@ async function testDifficultyLevels() {
         console.log(`     Hard:   proposeFrequency=${hardBot.config.proposesTradesFrequency} (${hardBot.config.proposesTradesFrequency * 100}% chance)`);
 
         assert(easyBot.config.proposesTradesFrequency < hardBot.config.proposesTradesFrequency,
-              'Easy bot proposes trades less often');
+            'Easy bot proposes trades less often');
     }
 
     // Test 9: Verify difficulty affects actual property evaluation
@@ -1223,31 +1223,31 @@ async function testDifficultyLevels() {
     {
         // Set up scenario where buying a property would block opponent
         const mockGame = createMockGame();
-        
+
         // Give player2 two pinks (Pall Mall 11, Whitehall 12), Northumberland (14) would block
         mockGame.board[11].owner = 'player2-id';
         mockGame.board[12].owner = 'player2-id';
         mockGame.players[1].properties = [mockGame.board[11], mockGame.board[12]];
-        
+
         const property = mockGame.board[14]; // Northumberland Ave
-        
+
         const easyBot = createBotWithDifficulty('easy');
         easyBot.gameState = mockGame;
         easyBot.myPlayer = mockGame.players[0];
         easyBot.myPlayer.money = 500;
-        
+
         const hardBot = createBotWithDifficulty('hard');
         hardBot.gameState = JSON.parse(JSON.stringify(mockGame)); // Deep copy
         hardBot.myPlayer = hardBot.gameState.players[0];
         hardBot.myPlayer.money = 500;
-        
+
         // Both should want to buy, but for different reasons
         const easyBuys = easyBot.evaluateProperty(property);
         const hardBuys = hardBot.evaluateProperty(property);
-        
+
         console.log(`     Easy bot would buy: ${easyBuys ? 'YES' : 'NO'} (may not recognize blocking value)`);
         console.log(`     Hard bot would buy: ${hardBuys ? 'YES' : 'NO'} (recognizes blocking value)`);
-        
+
         assert(hardBuys === true, 'Hard bot buys blocking property');
     }
 
@@ -1257,11 +1257,11 @@ async function testDifficultyLevels() {
         const easyBot = createBotWithDifficulty('easy');
         const mediumBot = createBotWithDifficulty('medium');
         const hardBot = createBotWithDifficulty('hard');
-        
+
         console.log(`     Easy bot name:   ${easyBot.botName} (from easy pool)`);
         console.log(`     Medium bot name: ${mediumBot.botName} (from medium pool)`);
         console.log(`     Hard bot name:   ${hardBot.botName} (from hard pool)`);
-        
+
         assert(easyBot.difficulty === 'easy', 'Easy bot has correct difficulty');
         assert(mediumBot.difficulty === 'medium', 'Medium bot has correct difficulty');
         assert(hardBot.difficulty === 'hard', 'Hard bot has correct difficulty');
@@ -1273,6 +1273,240 @@ async function testDifficultyLevels() {
     console.log('     MEDIUM: Balanced play, some strategic awareness');
     console.log('     HARD:   Optimal decisions, full strategic awareness');
     console.log('  ─────────────────────────────────────────────────────────────\n');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COUNTER-TRADE OFFER TESTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function testCounterTradeOffers() {
+    log('Counter-Trade Offer Logic', 'test');
+
+    const mockGame = createMockGame();
+    const bot = createBot();
+    bot.gameState = mockGame;
+    bot.myPlayer = mockGame.players[0];
+    bot.myPlayer.money = 1500;
+
+    console.log('\n  📊 COUNTER-TRADE TESTS\n');
+    console.log('  ' + '─'.repeat(60));
+
+    // Setup: Bot owns Mediterranean (index 1, price £60)
+    mockGame.board[1].owner = 'bot-id';
+    bot.myPlayer.properties = [{ index: 1, ...mockGame.board[1] }];
+    mockGame.players[1].money = 500; // Other player has money for counters
+
+    // Test 1: Close trade should generate counter-offer
+    const trade1 = {
+        from: 'player2-id',
+        to: 'bot-id',
+        offer: { money: 50 }, // ~0.8x value, close but not acceptable
+        request: { properties: [1] }
+    };
+    const eval1 = bot.evaluateTradeAdvanced(trade1);
+    const counter1 = bot.generateCounterOffer(trade1, eval1);
+
+    assert(counter1 !== null, 'Close trade (0.8x) generates counter-offer',
+        `Ratio: ${eval1.ratio.toFixed(2)}, Counter: ${counter1 ? 'yes' : 'no'}`);
+
+    if (counter1) {
+        assert(counter1.request.money > trade1.offer.money,
+            'Counter-offer requests more money than original',
+            `Original: £${trade1.offer.money}, Counter requests: £${counter1.request.money}`);
+    }
+
+    // Test 2: Very bad trade should NOT generate counter-offer
+    const trade2 = {
+        from: 'player2-id',
+        to: 'bot-id',
+        offer: { money: 10 }, // ~0.15x value, too bad
+        request: { properties: [1] }
+    };
+    const eval2 = bot.evaluateTradeAdvanced(trade2);
+    const counter2 = bot.generateCounterOffer(trade2, eval2);
+
+    assert(counter2 === null, 'Very bad trade (0.15x) does NOT generate counter-offer',
+        `Ratio: ${eval2.ratio.toFixed(2)}`);
+
+    // Test 3: Already acceptable trade should NOT generate counter-offer
+    const trade3 = {
+        from: 'player2-id',
+        to: 'bot-id',
+        offer: { money: 150 }, // 2.5x value, already great
+        request: { properties: [1] }
+    };
+    const eval3 = bot.evaluateTradeAdvanced(trade3);
+    const counter3 = bot.generateCounterOffer(trade3, eval3);
+
+    assert(counter3 === null, 'Good trade (2.5x) does NOT generate counter-offer',
+        `Ratio: ${eval3.ratio.toFixed(2)}`);
+
+    // Test 4: Trade giving opponent monopoly should NOT be countered
+    resetMockGameOwnership(mockGame);
+    mockGame.board[6].owner = 'player2-id'; // Angel Islington
+    mockGame.board[8].owner = 'player2-id'; // Euston Road  
+    mockGame.board[9].owner = 'bot-id'; // Pentonville Road - blocks monopoly
+    bot.myPlayer.properties = [{ index: 9, ...mockGame.board[9] }];
+
+    const trade4 = {
+        from: 'player2-id',
+        to: 'bot-id',
+        offer: { money: 100 }, // Would be close deal normally
+        request: { properties: [9] }
+    };
+    const eval4 = bot.evaluateTradeAdvanced(trade4);
+    const counter4 = bot.generateCounterOffer(trade4, eval4);
+
+    assert(counter4 === null, 'Monopoly-giving trade NOT countered (strategic decline)',
+        'Trade would complete opponent monopoly');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SMART MORTGAGE PRIORITY TESTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function testSmartMortgagePriority() {
+    log('Smart Mortgage Priority', 'test');
+
+    const mockGame = createMockGame();
+    const bot = createBot();
+    bot.gameState = mockGame;
+    bot.myPlayer = mockGame.players[0];
+
+    console.log('\n  📊 SMART MORTGAGE PRIORITY TESTS\n');
+    console.log('  ' + '─'.repeat(60));
+
+    // Setup: Bot owns cheap property and expensive blocking property
+    resetMockGameOwnership(mockGame);
+    mockGame.board[1].owner = 'bot-id'; // Old Kent Road £60 (cheap)
+    mockGame.board[9].owner = 'bot-id'; // Pentonville Road £120 (blocking)
+    mockGame.board[6].owner = 'player2-id'; // Angel Islington - opponent
+    mockGame.board[8].owner = 'player2-id'; // Euston Road - opponent
+    // Now index 9 blocks player2's light-blue monopoly!
+
+    bot.myPlayer.properties = [
+        { index: 1, ...mockGame.board[1] },
+        { index: 9, ...mockGame.board[9] }
+    ];
+
+    // Test 1: Blocking property should have higher priority (mortgage last)
+    const priority = bot.getMortgagePriority();
+
+    assert(priority.length === 2, 'getMortgagePriority returns 2 properties');
+
+    // First property (lowest priority) should be Old Kent Road (cheap, not blocking)
+    const firstToMortgage = priority[0];
+    assert(firstToMortgage.name === 'Old Kent Road',
+        'Cheap non-blocking property mortgaged first',
+        `Got: ${firstToMortgage.name} (priority: ${firstToMortgage._mortgagePriority})`);
+
+    // Second property (higher priority) should be Pentonville Road (blocking)
+    const lastToMortgage = priority[1];
+    assert(lastToMortgage.name === 'Pentonville Road',
+        'Blocking property mortgaged last',
+        `Got: ${lastToMortgage.name} (priority: ${lastToMortgage._mortgagePriority})`);
+
+    // Test 2: Properties in near-complete monopoly should have higher priority
+    resetMockGameOwnership(mockGame);
+    mockGame.board[1].owner = 'bot-id'; // Old Kent Road £60
+    mockGame.board[3].owner = 'bot-id'; // Whitechapel £60 - completes brown!
+    mockGame.board[39].owner = 'bot-id'; // Mayfair £400 (expensive but alone)
+    bot.myPlayer.properties = [
+        { index: 1, ...mockGame.board[1] },
+        { index: 3, ...mockGame.board[3] },
+        { index: 39, ...mockGame.board[39] }
+    ];
+
+    const priority2 = bot.getMortgagePriority();
+
+    // Mayfair should be mortgaged first despite higher price (it's alone, no synergy)
+    // Actually browns together get monopoly bonus...
+    // The expensive property WITHOUT monopoly potential should be lower in list
+    console.log('  Priority order:');
+    priority2.forEach((p, i) => {
+        console.log(`     ${i + 1}. ${p.name} (£${p.price}, priority: ${p._mortgagePriority?.toFixed(0)})`);
+    });
+
+    // Brown monopoly pieces should NOT be first to mortgage
+    const brownFirst = priority2[0].color === 'brown';
+    assert(!brownFirst, 'Complete monopoly pieces NOT mortgaged first',
+        `First to mortgage: ${priority2[0].name}`);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// AUTOMATIC UNMORTGAGING TESTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function testAutomaticUnmortgaging() {
+    log('Automatic Unmortgaging Logic', 'test');
+
+    const mockGame = createMockGame();
+    const bot = createBot();
+    bot.gameState = mockGame;
+    bot.myPlayer = mockGame.players[0];
+    bot.socket = {
+        emit: (event, data) => { bot._lastEmit = { event, data }; },
+        on: () => { }
+    };
+    bot.gameId = 'TEST';
+
+    console.log('\n  📊 AUTOMATIC UNMORTGAGING TESTS\n');
+    console.log('  ' + '─'.repeat(60));
+
+    // Setup: Bot owns mortgaged property with plenty of cash
+    resetMockGameOwnership(mockGame);
+    mockGame.board[1].owner = 'bot-id';
+    mockGame.board[1].mortgaged = true;
+    mockGame.board[1].mortgage = 30; // Unmortgage cost: £33
+    bot.myPlayer.properties = [{ index: 1, ...mockGame.board[1] }];
+    bot.myPlayer.money = 500;
+
+    // Test 1: Rich bot should unmortgage
+    bot._lastEmit = null;
+    const result1 = bot.considerUnmortgagingProperties();
+
+    assert(result1 === true, 'Rich bot (£500) unmortgages property',
+        `Result: ${result1}, Emit: ${bot._lastEmit?.event}`);
+
+    if (bot._lastEmit) {
+        assert(bot._lastEmit.event === 'unmortgageProperty',
+            'Emits unmortgageProperty event',
+            `Emitted: ${bot._lastEmit.event}`);
+    }
+
+    // Test 2: Poor bot should NOT unmortgage
+    bot.myPlayer.money = 50; // Below cost + reserve
+    bot._lastEmit = null;
+    const result2 = bot.considerUnmortgagingProperties();
+
+    assert(result2 === false || result2 === undefined,
+        'Poor bot (£50) does NOT unmortgage',
+        `Money: £${bot.myPlayer.money}, Reserve: £${bot.config.minCashReserve}`);
+
+    // Test 3: Monopoly completion should be prioritized
+    resetMockGameOwnership(mockGame);
+    mockGame.board[1].owner = 'bot-id';
+    mockGame.board[1].mortgaged = true;
+    mockGame.board[1].mortgage = 30;
+    mockGame.board[3].owner = 'bot-id';
+    mockGame.board[3].mortgaged = false; // One unmortgaged
+    mockGame.board[39].owner = 'bot-id';
+    mockGame.board[39].mortgaged = true;
+    mockGame.board[39].mortgage = 200; // Mayfair mortgaged
+    bot.myPlayer.properties = [
+        { index: 1, ...mockGame.board[1] },
+        { index: 3, ...mockGame.board[3] },
+        { index: 39, ...mockGame.board[39] }
+    ];
+    bot.myPlayer.money = 500; // Can afford both
+
+    bot._lastEmit = null;
+    bot.considerUnmortgagingProperties();
+
+    // Should unmortgage Old Kent Road first (completes brown monopoly for building)
+    assert(bot._lastEmit?.data?.propertyIndex === 1,
+        'Monopoly-completing property unmortgaged first',
+        `Unmortgaged index: ${bot._lastEmit?.data?.propertyIndex} (expected: 1 for brown monopoly)`);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1293,7 +1527,7 @@ function generateSummary() {
     const tradeTotal = testResults.trades.length;
 
     if (tradeTotal > 0) {
-    console.log('\n📊 TRADE DECISIONS:');
+        console.log('\n📊 TRADE DECISIONS:');
         console.log(`   Correct Decisions: ${tradePassed}/${tradeTotal} (${((tradePassed / tradeTotal) * 100).toFixed(0)}%)`);
     }
 
@@ -1346,6 +1580,9 @@ async function runTests() {
         await testCardResponses();
         await testTradeCooldowns();
         await testDifficultyLevels();
+        await testCounterTradeOffers();
+        await testSmartMortgagePriority();
+        await testAutomaticUnmortgaging();
 
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
         console.log(`\n⏱️  Tests completed in ${duration}s`);
