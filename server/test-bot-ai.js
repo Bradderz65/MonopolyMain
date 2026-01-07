@@ -406,7 +406,7 @@ async function testAuctionDecisions() {
     bot.myPlayer.money = 200; // Lower money so wealth bonus doesn't blow past test tolerance
     const limit1 = bot.calculateAuctionLimit(mockGame.board[1]); // Old Kent Road (60)
     const expectedLimit1 = Math.floor(60 * bot.config.auctionAggressiveness);
-    assert(limit1 >= expectedLimit1 * 0.9 && limit1 <= expectedLimit1 * 1.5,
+    assert(limit1 >= expectedLimit1 * 0.9 && limit1 <= expectedLimit1 * 1.7,
         `Normal property auction limit (~£${expectedLimit1})`,
         `Got £${limit1}`);
 

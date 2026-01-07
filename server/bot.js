@@ -1367,8 +1367,8 @@ class MonopolyBot {
         // The more money we have, the more we are willing to "overpay".
         // We add a portion of our available cash to the valuation to scale with wealth.
         // Cap this bonus so it doesn't lead to ridiculous overbidding on cheap properties.
-        const maxWealthBonus = property.price * 0.3;
-        const wealthBonus = Math.min(maxWealthBonus, Math.max(0, this.myPlayer.money * 0.02));
+        const maxWealthBonus = property.price * 0.5;
+        const wealthBonus = Math.min(maxWealthBonus, Math.max(0, this.myPlayer.money * 0.05));
         maxBid += wealthBonus;
 
         // Add randomness for easier difficulties (makes bidding less optimal)
