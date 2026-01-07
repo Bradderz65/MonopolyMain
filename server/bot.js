@@ -732,7 +732,9 @@ class MonopolyBot {
                 this.receivedTradeHistory.delete(historyKey);
             } else {
                 // Try to generate a counter-offer before declining
-                const counterOffer = this.generateCounterOffer(trade, evaluation);
+                // Pass the decline count so we can escalate the price
+                const declineCount = this.receivedTradeHistory.get(historyKey)?.count || 0;
+                const counterOffer = this.generateCounterOffer(trade, evaluation, declineCount);
 
                 if (counterOffer) {
                     console.log(`[BOT ${this.botName}] Proposing counter-offer instead of declining`);
@@ -881,7 +883,7 @@ class MonopolyBot {
                 ratio: cashRatio,
                 reason,
                 receivingValue: adjustedReceiving,
-                givingValue
+                givingValue: totalRequestedPropertyValue // Fix: Ensure counter-offer logic sees the property value
             };
         }
 
@@ -996,18 +998,40 @@ class MonopolyBot {
      * Generate a counter-offer for a trade that's close but not acceptable
      * @param {Object} trade - The original trade proposal
      * @param {Object} evaluation - The result from evaluateTradeAdvanced
+     * @param {number} declineCount - How many times we've declined similar trades from this player
      * @returns {Object|null} Counter-offer terms or null if no reasonable counter possible
      */
-    generateCounterOffer(trade, evaluation) {
-        // Only counter if the trade is "close" - ratio between 0.6 and the accept threshold
-        // Below 0.6 is too bad to counter, at or above threshold would have been accepted
-        const acceptThreshold = this.config.tradeAcceptThreshold || 1.0;
-        if (evaluation.ratio < 0.6 || evaluation.ratio >= acceptThreshold) {
+    generateCounterOffer(trade, evaluation, declineCount = 0) {
+        // Only counter if the trade was actually declined
+        if (evaluation.shouldAccept) {
             return null;
         }
 
-        // Don't counter if it would give opponent a monopoly (no amount of money fixes that strategically)
+        // For cash-only trades, check if the offer is at least 60% of what we need
+        const isCashOnlyOffer = (trade.offer?.properties || []).length === 0 && (trade.offer?.money || 0) > 0;
         const requestedProps = trade.request?.properties || [];
+
+        if (isCashOnlyOffer && requestedProps.length > 0) {
+            // Cash-only trade: compare cash offered vs what we need (1.5x property value for hard bot)
+            const cashOffered = trade.offer?.money || 0;
+            const requiredMultiplier = this.config.tradeCashMultiplier;
+            const requiredCash = evaluation.givingValue * requiredMultiplier;
+            const cashRatio = cashOffered / requiredCash;
+
+            // Only counter if they're offering at least 60% of required amount
+            if (cashRatio < 0.6) {
+                console.log(`[BOT ${this.botName}] Cash offer too low to counter (${(cashRatio * 100).toFixed(0)}% of needed)`);
+                return null;
+            }
+        } else {
+            // Property swap or mixed trade: use standard ratio check
+            // Only counter if ratio is between 0.6 and 0.95 (close but not acceptable)
+            if (evaluation.ratio < 0.6 || evaluation.ratio >= 0.95) {
+                return null;
+            }
+        }
+
+        // Don't counter if it would give opponent a monopoly (no amount of money fixes that strategically)
         for (const propIndex of requestedProps) {
             const property = this.gameState.board[propIndex];
             if (this.wouldGiveOpponentMonopoly(property)) {
@@ -1017,8 +1041,13 @@ class MonopolyBot {
         }
 
         // Calculate what we need to make this trade acceptable
-        // Target ratio is 1.0 (fair trade) plus a small premium for our trouble
-        const targetRatio = 1.05;
+        // Base: 20% premium, escalates by 5% for each time they've asked before
+        const basePremium = 0.20;
+        const escalation = Math.min(declineCount * 0.05, 0.30); // Cap at 50% total (20% + 30%)
+        const targetRatio = 1.0 + basePremium + escalation;
+
+        console.log(`[BOT ${this.botName}] Counter-offer premium: ${((targetRatio - 1) * 100).toFixed(0)}% (base 20% + ${(escalation * 100).toFixed(0)}% escalation)`);
+
         const currentReceiving = evaluation.receivingValue;
         const currentGiving = evaluation.givingValue;
 
