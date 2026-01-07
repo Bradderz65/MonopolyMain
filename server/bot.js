@@ -1530,6 +1530,26 @@ class MonopolyBot {
             }
         }
 
+        // BLUFF CALLER (Anti-Shill Strategy)
+        // If we don't strictly NEED this property (reluctance > 0),
+        // and the price is getting high (over market value),
+        // we might randomly bail out to punish opponents driving the price up.
+        // This prevents humans from safely "bidding up" the bot.
+        if (!shouldPass && reluctance > 0.0 && priceRatio > 1.15) {
+            // 15% chance to bail if price is > 115% value
+            if (Math.random() < 0.15) {
+                 console.log(`[BOT ${this.botName}] Calling bluff! Price high, letting opponent overpay.`);
+                 shouldPass = true;
+            }
+        }
+        if (!shouldPass && reluctance > 0.0 && priceRatio > 1.6) {
+             // 35% chance to bail if price is > 160% value (even if we are rich/bully)
+             if (Math.random() < 0.35) {
+                  console.log(`[BOT ${this.botName}] Calling bluff! Way too high.`);
+                  shouldPass = true;
+             }
+        }
+
         // Log reasoning for debugging/human-feel
         if (reluctance < 0.1) {
             console.log(`[BOT ${this.botName}] Eager to win ${property.name}! (Reluctance: ${reluctance.toFixed(2)})`);
