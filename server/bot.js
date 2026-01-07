@@ -999,9 +999,10 @@ class MonopolyBot {
      * @returns {Object|null} Counter-offer terms or null if no reasonable counter possible
      */
     generateCounterOffer(trade, evaluation) {
-        // Only counter if the trade is "close" - ratio between 0.6 and 0.9
-        // Below 0.6 is too bad to counter, above 0.9 would have been accepted
-        if (evaluation.ratio < 0.6 || evaluation.ratio >= 0.9) {
+        // Only counter if the trade is "close" - ratio between 0.6 and the accept threshold
+        // Below 0.6 is too bad to counter, at or above threshold would have been accepted
+        const acceptThreshold = this.config.tradeAcceptThreshold || 1.0;
+        if (evaluation.ratio < 0.6 || evaluation.ratio >= acceptThreshold) {
             return null;
         }
 
