@@ -350,13 +350,22 @@ class Game {
           result.action = 'buyOrAuction';
           result.price = space.price;
         } else if (space.owner !== player.id && !space.mortgaged) {
-          const rent = this.calculateRent(space, player);
-          this.payRent(player, space, rent);
-          result.action = 'paidRent';
-          result.rent = rent;
-          result.position = player.position;
+          const owner = this.players.find(p => p.id === space.owner);
+          if (owner && owner.inJail) {
+            this.addLog(`${player.name} landed on ${space.name} but ${owner.name} is in jail and collects no rent`);
+            result.action = 'noRentJail';
+            result.ownerName = owner.name;
+            result.position = player.position;
+          } else {
+            const rent = this.calculateRent(space, player);
+            this.payRent(player, space, rent);
+            result.action = 'paidRent';
+            result.rent = rent;
+            result.position = player.position;
+          }
         }
         break;
+
 
       case 'tax':
         player.money -= space.amount;
@@ -438,7 +447,13 @@ class Game {
       return;
     }
 
+    if (owner.inJail) {
+      this.addLog(`${player.name} landed on ${space.name} but ${owner.name} is in jail and collects no rent`);
+      return;
+    }
+
     if (player.money >= rent) {
+
       player.money -= rent;
       owner.money += rent;
       this.addLog(`${player.name} paid £${rent} rent to ${owner.name}`);

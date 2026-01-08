@@ -251,7 +251,15 @@ function App() {
         sounds.payRent();
         setEventToast({ type: 'rent', title: 'Rent Paid!', message: `Paid £${result.rent} rent`, position: result.position });
         setTimeout(() => setEventToast(null), 3000);
+      } else if (result.action === 'noRentJail') {
+        setEventToast({
+          type: 'info',
+          title: 'No Rent',
+          message: `${result.ownerName || 'Owner'} is in jail - no rent due`
+        });
+        setTimeout(() => setEventToast(null), 3000);
       } else if (result.action === 'paidTax') {
+
         sounds.payMoney();
         setEventToast({ type: 'tax', title: 'Tax Paid!', message: `Paid £${result.amount}` });
         setTimeout(() => setEventToast(null), 3000);
