@@ -366,7 +366,6 @@ class Game {
         }
         break;
 
-
       case 'tax':
         player.money -= space.amount;
         this.freeParking += space.amount;
@@ -446,14 +445,7 @@ class Game {
       this.addLog(`${player.name} landed on ${space.name} but owner is unavailable`);
       return;
     }
-
-    if (owner.inJail) {
-      this.addLog(`${player.name} landed on ${space.name} but ${owner.name} is in jail and collects no rent`);
-      return;
-    }
-
     if (player.money >= rent) {
-
       player.money -= rent;
       owner.money += rent;
       this.addLog(`${player.name} paid £${rent} rent to ${owner.name}`);

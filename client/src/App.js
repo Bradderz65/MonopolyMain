@@ -31,13 +31,13 @@ function App() {
   const updateGameStateSafely = useCallback((newGame) => {
     setGameState(prev => {
       if (!prev || !newGame) return newGame;
-      
+
       // Check if lastDiceRoll exists in both and has same values
       if (prev.lastDiceRoll && newGame.lastDiceRoll &&
-          prev.lastDiceRoll.die1 === newGame.lastDiceRoll.die1 &&
-          prev.lastDiceRoll.die2 === newGame.lastDiceRoll.die2 &&
-          prev.lastDiceRoll.total === newGame.lastDiceRoll.total) {
-        
+        prev.lastDiceRoll.die1 === newGame.lastDiceRoll.die1 &&
+        prev.lastDiceRoll.die2 === newGame.lastDiceRoll.die2 &&
+        prev.lastDiceRoll.total === newGame.lastDiceRoll.total) {
+
         // Return new game state but with the OLD lastDiceRoll object reference
         // This ensures strict equality checks (roll !== prevRoll) return false
         return {
@@ -45,7 +45,7 @@ function App() {
           lastDiceRoll: prev.lastDiceRoll
         };
       }
-      
+
       return newGame;
     });
   }, []);
@@ -235,15 +235,15 @@ function App() {
           console.log('[CLIENT] Skipping stale state update from landing result');
           return prev;
         }
-        
+
         // Preserve lastDiceRoll object if values match
         if (prev && prev.lastDiceRoll && game.lastDiceRoll &&
-            prev.lastDiceRoll.die1 === game.lastDiceRoll.die1 &&
-            prev.lastDiceRoll.die2 === game.lastDiceRoll.die2 &&
-            prev.lastDiceRoll.total === game.lastDiceRoll.total) {
-           return { ...game, lastDiceRoll: prev.lastDiceRoll };
+          prev.lastDiceRoll.die1 === game.lastDiceRoll.die1 &&
+          prev.lastDiceRoll.die2 === game.lastDiceRoll.die2 &&
+          prev.lastDiceRoll.total === game.lastDiceRoll.total) {
+          return { ...game, lastDiceRoll: prev.lastDiceRoll };
         }
-        
+
         return game;
       });
 
@@ -259,7 +259,6 @@ function App() {
         });
         setTimeout(() => setEventToast(null), 3000);
       } else if (result.action === 'paidTax') {
-
         sounds.payMoney();
         setEventToast({ type: 'tax', title: 'Tax Paid!', message: `Paid £${result.amount}` });
         setTimeout(() => setEventToast(null), 3000);
@@ -301,14 +300,14 @@ function App() {
         const updatedPlayers = game.players.map(p =>
           p.id === forcedMove.playerId ? { ...p, position: forcedMove.startPos } : p
         );
-        
+
         let rollToUse = game.lastDiceRoll;
         // Preserve lastDiceRoll object if values match
         if (prev.lastDiceRoll && game.lastDiceRoll &&
-            prev.lastDiceRoll.die1 === game.lastDiceRoll.die1 &&
-            prev.lastDiceRoll.die2 === game.lastDiceRoll.die2 &&
-            prev.lastDiceRoll.total === game.lastDiceRoll.total) {
-           rollToUse = prev.lastDiceRoll;
+          prev.lastDiceRoll.die1 === game.lastDiceRoll.die1 &&
+          prev.lastDiceRoll.die2 === game.lastDiceRoll.die2 &&
+          prev.lastDiceRoll.total === game.lastDiceRoll.total) {
+          rollToUse = prev.lastDiceRoll;
         }
 
         return { ...game, players: updatedPlayers, lastDiceRoll: rollToUse };
@@ -376,62 +375,62 @@ function App() {
           setTimeout(() => sounds.doubles(), 200);
         }
 
-      // Start movement animation after dice result shown
-      setTimeout(() => {
-        const steps = result.total;
+        // Start movement animation after dice result shown
+        setTimeout(() => {
+          const steps = result.total;
 
-        if (steps > 0) {
-          setAnimatingPlayer({ id: movingPlayer.id, position: startPos });
-          let currentStep = 0;
-          const moveInterval = setInterval(() => {
-            currentStep++;
-            const newPos = (startPos + currentStep) % 40;
-            setAnimatingPlayer({ id: movingPlayer.id, position: newPos });
-            
-            // Check for passing GO
-            if (newPos === 0) {
-              sounds.collectMoney();
-              setEventToast({ type: 'money', title: 'Passed GO!', message: 'Collected £200' });
-              setTimeout(() => setEventToast(null), 3000);
-            }
+          if (steps > 0) {
+            setAnimatingPlayer({ id: movingPlayer.id, position: startPos });
+            let currentStep = 0;
+            const moveInterval = setInterval(() => {
+              currentStep++;
+              const newPos = (startPos + currentStep) % 40;
+              setAnimatingPlayer({ id: movingPlayer.id, position: newPos });
 
-            sounds.move();
+              // Check for passing GO
+              if (newPos === 0) {
+                sounds.collectMoney();
+                setEventToast({ type: 'money', title: 'Passed GO!', message: 'Collected £200' });
+                setTimeout(() => setEventToast(null), 3000);
+              }
 
-            if (currentStep >= steps) {
-              clearInterval(moveInterval);
-              // Animation complete - update to final position
-              setTimeout(() => {
-                setAnimatingPlayer(null);
-                isAnimating = false;
+              sounds.move();
 
-                // Update player to final position
-                setGameState(prev => {
-                  if (!prev) return prev;
-                  const updatedPlayers = prev.players.map((p, idx) => {
-                    if (idx === game.currentPlayerIndex) {
-                      return { ...p, position: newPosition };
-                    }
-                    return p;
+              if (currentStep >= steps) {
+                clearInterval(moveInterval);
+                // Animation complete - update to final position
+                setTimeout(() => {
+                  setAnimatingPlayer(null);
+                  isAnimating = false;
+
+                  // Update player to final position
+                  setGameState(prev => {
+                    if (!prev) return prev;
+                    const updatedPlayers = prev.players.map((p, idx) => {
+                      if (idx === game.currentPlayerIndex) {
+                        return { ...p, position: newPosition };
+                      }
+                      return p;
+                    });
+                    return { ...prev, players: updatedPlayers };
                   });
-                  return { ...prev, players: updatedPlayers };
-                });
 
-                // Process any pending landing result
-                if (pendingLandingResult) {
-                  const queuedLandingResult = pendingLandingResult;
-                  pendingLandingResult = null;
-                  setTimeout(() => {
-                    handleLandingResult(queuedLandingResult.result, queuedLandingResult.game);
-                  }, 100);
-                }
+                  // Process any pending landing result
+                  if (pendingLandingResult) {
+                    const queuedLandingResult = pendingLandingResult;
+                    pendingLandingResult = null;
+                    setTimeout(() => {
+                      handleLandingResult(queuedLandingResult.result, queuedLandingResult.game);
+                    }, 100);
+                  }
 
-              }, 150);
-            }
-          }, 200);
-        } else {
-          isAnimating = false;
-        }
-      }, 400);
+                }, 150);
+              }
+            }, 200);
+          } else {
+            isAnimating = false;
+          }
+        }, 400);
 
       }, 500);
     });
