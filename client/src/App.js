@@ -165,25 +165,11 @@ function App() {
     let pendingLandingResult = null;
     let isAnimating = false;
 
-    // Helper function to merge trades from previous and incoming game states
-    // This ensures pending trades aren't lost during animation state updates
-    const mergeTradesFromStates = (prevState, newState) => {
-      if (!prevState?.trades && !newState?.trades) return [];
-      if (!prevState?.trades) return newState?.trades || [];
-      if (!newState?.trades) return prevState?.trades || [];
-
-      // Create a map of trades by ID from the new state
-      const newTradesMap = new Map(newState.trades.map(t => [t.id, t]));
-
-      // Start with new trades, then add any pending trades from prev that aren't in new
-      const mergedTrades = [...newState.trades];
-      prevState.trades.forEach(prevTrade => {
-        if (prevTrade.status === 'pending' && !newTradesMap.has(prevTrade.id)) {
-          mergedTrades.push(prevTrade);
-        }
-      });
-
-      return mergedTrades;
+    // Helper function to get the latest trades during animation state updates
+    // Always uses gameStateRef.current which is updated by trade events in real-time
+    // This avoids re-inserting accepted/declined trades from stale prev state
+    const getLatestTrades = (fallbackGame) => {
+      return gameStateRef.current?.trades || fallbackGame?.trades || [];
     };
 
     const animatePlayerSteps = (playerId, startPos, steps, direction, options = {}) => new Promise(resolve => {
@@ -257,18 +243,18 @@ function App() {
           return prev;
         }
 
-        // Merge trades to preserve any pending trades that arrived during animation
-        const mergedTrades = mergeTradesFromStates(prev, game);
+        // Get latest trades from gameStateRef to avoid re-inserting accepted/declined trades
+        const latestTrades = getLatestTrades(game);
 
         // Preserve lastDiceRoll object if values match
         if (prev && prev.lastDiceRoll && game.lastDiceRoll &&
           prev.lastDiceRoll.die1 === game.lastDiceRoll.die1 &&
           prev.lastDiceRoll.die2 === game.lastDiceRoll.die2 &&
           prev.lastDiceRoll.total === game.lastDiceRoll.total) {
-          return { ...game, lastDiceRoll: prev.lastDiceRoll, trades: mergedTrades };
+          return { ...game, lastDiceRoll: prev.lastDiceRoll, trades: latestTrades };
         }
 
-        return { ...game, trades: mergedTrades };
+        return { ...game, trades: latestTrades };
       });
 
       if (result.action === 'paidRent') {
@@ -338,7 +324,7 @@ function App() {
           ...game,
           players: updatedPlayers,
           lastDiceRoll: rollToUse,
-          trades: mergeTradesFromStates(prev, game)
+          trades: getLatestTrades(game)
         };
       });
 
@@ -370,7 +356,7 @@ function App() {
           lastDiceRoll: result,
           diceRolled: true,
           pendingAction: prev?.pendingAction || game.pendingAction,
-          trades: mergeTradesFromStates(prev, game)
+          trades: getLatestTrades(game)
         }));
         setTimeout(() => sounds.diceResult(), 500);
         return;
@@ -395,7 +381,7 @@ function App() {
           lastDiceRoll: result,
           diceRolled: true,
           pendingAction: prev?.pendingAction || game.pendingAction,
-          trades: mergeTradesFromStates(prev, game)
+          trades: getLatestTrades(game)
         };
       });
 
@@ -448,7 +434,7 @@ function App() {
                     return {
                       ...prev,
                       players: updatedPlayers,
-                      trades: mergeTradesFromStates(prev, latestState)
+                      trades: getLatestTrades(latestState)
                     };
                   });
 
