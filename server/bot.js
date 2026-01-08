@@ -452,6 +452,16 @@ class MonopolyBot {
             }
         });
 
+        this.socket.on('propertyUnmortgaged', ({ game }) => {
+            this.updateGameState(game);
+            // If we just unmortgaged something and it's our turn, we might want to do more
+            if (this.isMyTurn && !this.gameState.pendingAction) {
+                // Check if we want to unmortgage more stuff or end turn
+                const delay = this.getRandomDelay('action');
+                setTimeout(() => this.checkAndTakeTurn(), delay);
+            }
+        });
+
         this.socket.on('playerBankrupt', ({ game }) => {
             this.updateGameState(game);
         });
