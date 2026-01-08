@@ -165,6 +165,27 @@ function App() {
     let pendingLandingResult = null;
     let isAnimating = false;
 
+    // Helper function to merge trades from previous and incoming game states
+    // This ensures pending trades aren't lost during animation state updates
+    const mergeTradesFromStates = (prevState, newState) => {
+      if (!prevState?.trades && !newState?.trades) return [];
+      if (!prevState?.trades) return newState?.trades || [];
+      if (!newState?.trades) return prevState?.trades || [];
+
+      // Create a map of trades by ID from the new state
+      const newTradesMap = new Map(newState.trades.map(t => [t.id, t]));
+
+      // Start with new trades, then add any pending trades from prev that aren't in new
+      const mergedTrades = [...newState.trades];
+      prevState.trades.forEach(prevTrade => {
+        if (prevTrade.status === 'pending' && !newTradesMap.has(prevTrade.id)) {
+          mergedTrades.push(prevTrade);
+        }
+      });
+
+      return mergedTrades;
+    };
+
     const animatePlayerSteps = (playerId, startPos, steps, direction, options = {}) => new Promise(resolve => {
       if (steps <= 0) {
         resolve();
@@ -236,15 +257,18 @@ function App() {
           return prev;
         }
 
+        // Merge trades to preserve any pending trades that arrived during animation
+        const mergedTrades = mergeTradesFromStates(prev, game);
+
         // Preserve lastDiceRoll object if values match
         if (prev && prev.lastDiceRoll && game.lastDiceRoll &&
           prev.lastDiceRoll.die1 === game.lastDiceRoll.die1 &&
           prev.lastDiceRoll.die2 === game.lastDiceRoll.die2 &&
           prev.lastDiceRoll.total === game.lastDiceRoll.total) {
-          return { ...game, lastDiceRoll: prev.lastDiceRoll };
+          return { ...game, lastDiceRoll: prev.lastDiceRoll, trades: mergedTrades };
         }
 
-        return game;
+        return { ...game, trades: mergedTrades };
       });
 
       if (result.action === 'paidRent') {
@@ -310,7 +334,12 @@ function App() {
           rollToUse = prev.lastDiceRoll;
         }
 
-        return { ...game, players: updatedPlayers, lastDiceRoll: rollToUse };
+        return {
+          ...game,
+          players: updatedPlayers,
+          lastDiceRoll: rollToUse,
+          trades: mergeTradesFromStates(prev, game)
+        };
       });
 
       isAnimating = true;
@@ -340,7 +369,8 @@ function App() {
           ...game,
           lastDiceRoll: result,
           diceRolled: true,
-          pendingAction: prev?.pendingAction || game.pendingAction
+          pendingAction: prev?.pendingAction || game.pendingAction,
+          trades: mergeTradesFromStates(prev, game)
         }));
         setTimeout(() => sounds.diceResult(), 500);
         return;
@@ -364,7 +394,8 @@ function App() {
           players: updatedPlayers,
           lastDiceRoll: result,
           diceRolled: true,
-          pendingAction: prev?.pendingAction || game.pendingAction
+          pendingAction: prev?.pendingAction || game.pendingAction,
+          trades: mergeTradesFromStates(prev, game)
         };
       });
 
@@ -403,7 +434,7 @@ function App() {
                   setAnimatingPlayer(null);
                   isAnimating = false;
 
-                  // Update player to final position
+                  // Update player to final position, preserving trades from both states
                   setGameState(prev => {
                     if (!prev) return prev;
                     const updatedPlayers = prev.players.map((p, idx) => {
@@ -412,7 +443,13 @@ function App() {
                       }
                       return p;
                     });
-                    return { ...prev, players: updatedPlayers };
+                    // Use gameStateRef to get the latest trades that may have arrived during animation
+                    const latestState = gameStateRef.current;
+                    return {
+                      ...prev,
+                      players: updatedPlayers,
+                      trades: mergeTradesFromStates(prev, latestState)
+                    };
                   });
 
                   // Process any pending landing result
