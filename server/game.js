@@ -445,6 +445,13 @@ class Game {
       this.addLog(`${player.name} landed on ${space.name} but owner is unavailable`);
       return;
     }
+
+    // Owner in jail cannot collect rent
+    if (owner.inJail) {
+      this.addLog(`${player.name} landed on ${space.name} but ${owner.name} is in jail and collects no rent`);
+      return;
+    }
+
     if (player.money >= rent) {
       player.money -= rent;
       owner.money += rent;
