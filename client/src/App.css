@@ -2957,6 +2957,7 @@
   .turn-status {
     padding: 10px;
     gap: 8px;
+    flex-wrap: nowrap; /* Prevent wrapping on mobile */
   }
 
   .turn-token-large {
@@ -4004,6 +4005,17 @@
     font-size: clamp(0.7rem, 4vw, 1.2rem);
   }
 
+  .space-icon-emoji.space-icon-parking {
+    font-size: clamp(1rem, 5vw, 1.6rem);
+  }
+
+  .space-icon-parking + .space-icon-label {
+    margin-top: -8px;
+    position: relative;
+    top: -4px;
+    display: block; /* Ensure it behaves as a block for margins */
+  }
+
   .space-icon-emoji.go-to-jail-hand {
     transform: rotate(-45deg) scale(0.9);
   }
@@ -4121,6 +4133,10 @@
 .space-icon-emoji {
   font-size: clamp(1rem, 3vw, 2rem);
   line-height: 1;
+}
+
+.space-icon-emoji.space-icon-parking {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
 }
 
 .space-icon-emoji.go-to-jail-hand {

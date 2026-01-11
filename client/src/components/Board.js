@@ -60,6 +60,14 @@ const getGridPosition = (spaceIndex) => {
   return { gridColumn: 6, gridRow: 6 };
 };
 
+// Consistent Parking Icon Component
+const ParkingIcon = () => (
+  <svg viewBox="0 0 100 100" className="space-icon-svg" style={{ width: '1em', height: '1em', verticalAlign: 'middle' }}>
+    <rect x="5" y="5" width="90" height="90" rx="15" fill="#3498db" />
+    <text x="50" y="80" fontSize="85" textAnchor="middle" fill="white" fontWeight="900" fontFamily="Arial, sans-serif">P</text>
+  </svg>
+);
+
 function Board({ board, players, onSpaceClick, animatingPlayer, followMode, followPosition, eventToast, freeParking, housesAvailable, hotelsAvailable, currentCard, onCardDeckClick, ownerDotScale = 1 }) {
   const getPlayersOnSpace = (spaceIndex) => {
     return players.filter(p => {
@@ -136,7 +144,7 @@ function Board({ board, players, onSpaceClick, animatingPlayer, followMode, foll
       if (space.type === 'free-parking') {
         return (
           <div className="space-name space-icon-stack">
-            <span className="space-icon-emoji" aria-hidden="true">🅿️</span>
+            <span className="space-icon-emoji space-icon-parking" aria-hidden="true"><ParkingIcon /></span>
             <span className="space-icon-label">Free Parking</span>
           </div>
         );
@@ -363,7 +371,7 @@ function Board({ board, players, onSpaceClick, animatingPlayer, followMode, foll
           <p>🏠 Houses Left: {housesAvailable ?? 32}</p>
           <p>🏨 Hotels Left: {hotelsAvailable ?? 12}</p>
           <p className="free-parking-display">
-            🅿️ Free Parking: <span className="free-parking-amount">£{freeParking || 0}</span>
+            <span style={{marginRight: '5px', fontSize: '1.2em', verticalAlign: 'sub'}}><ParkingIcon /></span> Free Parking: <span className="free-parking-amount">£{freeParking || 0}</span>
           </p>
         </div>
       </div>
