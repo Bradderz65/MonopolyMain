@@ -8,7 +8,7 @@
 ║                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════╝
 
-📅 Test Run Started: 29/12/2025, 04:42:37
+📅 Test Run Started: 11/01/2026, 01:23:40
 
 
 ══════════════════════════════════════════════════════════════════════
@@ -23,50 +23,50 @@
 ╚════════════════════════════════════════════════════════════════╝
 
 🧪 Trade Decision Analysis
-[BOT RoboTycoon] Created with difficulty: HARD
+[BOT LandBaron] Created with difficulty: HARD
 
   📊 TRADE SCENARIO TESTS
 
   ────────────────────────────────────────────────────────────
   ✅ Fair money offer (£150 for £60 property) (Ratio: 2.50)
-[BOT RoboTycoon] Cash offer too low: £30 for £60 (0.50x, need 1.5x)
+[BOT LandBaron] Cash offer too low: £30 for £60 (0.50x, need 1.5x)
   ✅ Lowball offer (£30 for £60 property) (Ratio: 0.50)
   ✅ Threshold offer (£90 = 1.5x of £60) (Ratio: 1.50)
-[BOT RoboTycoon] Trade would give Player2 a monopoly!
-[BOT RoboTycoon] This property blocks Player2's monopoly!
-[BOT RoboTycoon] Cash offer too low: £250 for £120 (2.08x, need 4x)
+[BOT LandBaron] Trade would give Player2 a monopoly!
+[BOT LandBaron] This property blocks Player2's monopoly!
+[BOT LandBaron] Cash offer too low: £250 for £120 (2.08x, need 4x)
   ✅ Giving opponent monopoly (should decline) (Ratio: 2.08)
-[BOT RoboTycoon] Trade would give Player2 a monopoly!
-[BOT RoboTycoon] This property blocks Player2's monopoly!
-[BOT RoboTycoon] Accepting massive overpay: 4.2x value
+[BOT LandBaron] Trade would give Player2 a monopoly!
+[BOT LandBaron] This property blocks Player2's monopoly!
+[BOT LandBaron] Accepting massive overpay: 4.2x value
   ✅ Massive overpay for blocking property (£500 for £120) (Ratio: 4.17)
-[BOT RoboTycoon] Trade would complete my brown monopoly!
+[BOT LandBaron] Trade would complete my brown monopoly!
   ✅ Completing MY monopoly (should accept) (Ratio: 1.44)
   ✅ Jail card included in offer (£80+card for £60) (Ratio: 2.17)
   ✅ Buying 3rd Railroad (synergy value) (Ratio: 1.14)
-[BOT RoboTycoon] Trade would complete my orange monopoly!
-[BOT RoboTycoon] Trade would give Player2 a monopoly!
-[BOT RoboTycoon] This property blocks Player2's monopoly!
+[BOT LandBaron] Trade would complete my orange monopoly!
+[BOT LandBaron] Trade would give Player2 a monopoly!
+[BOT LandBaron] This property blocks Player2's monopoly!
   ✅ Mutually Assured Monopoly (straight swap) (Ratio: 1.07)
-[BOT RoboTycoon] Trade would complete my orange monopoly!
-[BOT RoboTycoon] Trade would give Player2 a monopoly!
-[BOT RoboTycoon] This property blocks Player2's monopoly!
+[BOT LandBaron] Trade would complete my orange monopoly!
+[BOT LandBaron] Trade would give Player2 a monopoly!
+[BOT LandBaron] This property blocks Player2's monopoly!
   ✅ Mutually Assured Monopoly (sweetened +£300) (Ratio: 1.75)
 
 🧪 Negotiation Strategy (Progressive Bidding)
-[BOT PropertyKing] Created with difficulty: HARD
+[BOT RealEstateBot] Created with difficulty: HARD
 
   📊 PROGRESSIVE BIDDING TESTS
 
   Testing how bot offers change with repeated rejections...
   ────────────────────────────────────────────────────────────
-[BOT PropertyKing] Negotiation (attempt 0): Offering £340 for Park Lane (Value: £378 x 0.90)
+[BOT RealEstateBot] Negotiation (attempt 0): Offering £340 for Park Lane (Value: £378 x 0.90)
   Attempt 0: £340 (0.97x base value)
-[BOT PropertyKing] Negotiation (attempt 1): Offering £415 for Park Lane (Value: £378 x 1.10)
+[BOT RealEstateBot] Negotiation (attempt 1): Offering £415 for Park Lane (Value: £378 x 1.10)
   Attempt 1: £415 (1.19x base value)
-[BOT PropertyKing] Negotiation (attempt 2): Offering £491 for Park Lane (Value: £378 x 1.30)
+[BOT RealEstateBot] Negotiation (attempt 2): Offering £491 for Park Lane (Value: £378 x 1.30)
   Attempt 2: £491 (1.40x base value)
-[BOT PropertyKing] Negotiation (attempt 3): Offering £567 for Park Lane (Value: £378 x 1.50)
+[BOT RealEstateBot] Negotiation (attempt 3): Offering £567 for Park Lane (Value: £378 x 1.50)
   Attempt 3: £567 (1.62x base value)
   ✅ Offers increase with each rejection
 
@@ -91,7 +91,7 @@
   ✅ Utility synergy (2nd utility)
 
 🧪 Auction Decisions
-[BOT PropertyKing] Created with difficulty: HARD
+[BOT RealEstateBot] Created with difficulty: HARD
 
   📊 AUCTION BIDDING TESTS
 
@@ -101,9 +101,71 @@
   ✅ Blocking opponent auction limit (competitive)
   ✅ Railroad synergy auction limit (> base price)
   ✅ Auction limit respects cash reserve
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Calling bluff! Price high, letting opponent overpay.
+[BOT RealEstateBot] Passing on Old Kent Road (Reluctance: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Calling bluff! Price high, letting opponent overpay.
+[BOT RealEstateBot] Passing on Old Kent Road (Reluctance: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Calling bluff! Price high, letting opponent overpay.
+[BOT RealEstateBot] Passing on Old Kent Road (Reluctance: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Calling bluff! Price high, letting opponent overpay.
+[BOT RealEstateBot] Passing on Old Kent Road (Reluctance: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Calling bluff! Price high, letting opponent overpay.
+[BOT RealEstateBot] Passing on Old Kent Road (Reluctance: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Calling bluff! Price high, letting opponent overpay.
+[BOT RealEstateBot] Passing on Old Kent Road (Reluctance: 0.10)
+[BOT RealEstateBot] Calling bluff! Price high, letting opponent overpay.
+[BOT RealEstateBot] Passing on Old Kent Road (Reluctance: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+[BOT RealEstateBot] Calling bluff! Price high, letting opponent overpay.
+[BOT RealEstateBot] Passing on Old Kent Road (Reluctance: 0.10)
+[BOT RealEstateBot] Calling bluff! Price high, letting opponent overpay.
+[BOT RealEstateBot] Passing on Old Kent Road (Reluctance: 0.10)
+[BOT RealEstateBot] Calling bluff! Price high, letting opponent overpay.
+[BOT RealEstateBot] Passing on Old Kent Road (Reluctance: 0.10)
+[BOT RealEstateBot] Calling bluff! Price high, letting opponent overpay.
+[BOT RealEstateBot] Passing on Old Kent Road (Reluctance: 0.10)
+[BOT RealEstateBot] Bidding £81 on Old Kent Road (max: £81, r: 0.10)
+  ✅ Bot calls bluff on overpriced property
 
 🧪 Building Decisions
-[BOT WealthBot] Created with difficulty: HARD
+[BOT MonopolyMaster] Created with difficulty: HARD
 
   📊 HOUSE BUILDING TESTS
 
@@ -115,7 +177,7 @@
   ✅ Orange ranked higher than brown for building priority
 
 🧪 Jail Decisions
-[BOT LandBaron] Created with difficulty: HARD
+[BOT RoboTycoon] Created with difficulty: HARD
 
   📊 JAIL STRATEGY TESTS
 
@@ -127,7 +189,7 @@
   ✅ Poor player should try rolling doubles
 
 🧪 Bankruptcy Handling
-[BOT RoboTycoon] Created with difficulty: HARD
+[BOT WealthBot] Created with difficulty: HARD
 
   📊 BANKRUPTCY RECOVERY TESTS
 
@@ -137,7 +199,7 @@
   ✅ Bankruptcy asset calculation logic exists
 
 🧪 Game Phase Detection
-[BOT MonopolyMaster] Created with difficulty: HARD
+[BOT RealEstateBot] Created with difficulty: HARD
 
   📊 GAME PHASE TESTS
 
@@ -147,7 +209,7 @@
   ✅ Most properties owned = late phase
 
 🧪 Color Group Analysis
-[BOT MonopolyMaster] Created with difficulty: HARD
+[BOT LandBaron] Created with difficulty: HARD
 
   📊 COLOR GROUP ANALYSIS TESTS
 
@@ -213,12 +275,12 @@
   📊 COMPARING EASY vs MEDIUM vs HARD BOT BEHAVIOR
 
   [Trade Acceptance Thresholds]
-[BOT LearnBot] Created with difficulty: EASY
-[BOT SmartBot] Created with difficulty: MEDIUM
-[BOT WealthBot] Created with difficulty: HARD
-[BOT LearnBot] Cash offer too low: £50 for £60 (0.83x, need 1.2x)
-[BOT SmartBot] Cash offer too low: £50 for £60 (0.83x, need 1.3x)
-[BOT WealthBot] Cash offer too low: £50 for £60 (0.83x, need 1.5x)
+[BOT NewbieAI] Created with difficulty: EASY
+[BOT TacticalBot] Created with difficulty: MEDIUM
+[BOT LandBaron] Created with difficulty: HARD
+[BOT NewbieAI] Cash offer too low: £50 for £60 (0.83x, need 1.2x)
+[BOT TacticalBot] Cash offer too low: £50 for £60 (0.83x, need 1.3x)
+[BOT LandBaron] Cash offer too low: £50 for £60 (0.83x, need 1.5x)
      Easy Bot:   ❌ DECLINES (threshold: 0.8)
      Medium Bot: ❌ DECLINES (threshold: 1)
      Hard Bot:   ❌ DECLINES (threshold: 1)
@@ -236,8 +298,8 @@
 
   [Auction Aggressiveness & Randomness]
 [BOT BeginnerAI] Created with difficulty: EASY
-[BOT AdeptBot] Created with difficulty: MEDIUM
-[BOT RealEstateBot] Created with difficulty: HARD
+[BOT ChallengerAI] Created with difficulty: MEDIUM
+[BOT RoboTycoon] Created with difficulty: HARD
      Easy:   aggression=0.5, randomness=0.3
      Medium: aggression=0.7, randomness=0.15
      Hard:   aggression=0.85, randomness=0
@@ -245,9 +307,9 @@
   ✅ Hard bot is more aggressive in auctions
 
   [Strategic Awareness]
-[BOT LearnBot] Created with difficulty: EASY
-[BOT StrategistAI] Created with difficulty: MEDIUM
-[BOT WealthBot] Created with difficulty: HARD
+[BOT FriendlyBot] Created with difficulty: EASY
+[BOT CleverPlayer] Created with difficulty: MEDIUM
+[BOT LandBaron] Created with difficulty: HARD
      Easy:   recognizesBlocking=false, recognizesMonopolyValue=false
      Medium: recognizesBlocking=true, recognizesMonopolyValue=true
      Hard:   recognizesBlocking=true, recognizesMonopolyValue=true
@@ -256,8 +318,8 @@
   ✅ Hard bot DOES recognize monopoly value
 
   [Jail Strategy]
-[BOT NewbieAI] Created with difficulty: EASY
-[BOT TacticalBot] Created with difficulty: MEDIUM
+[BOT BeginnerAI] Created with difficulty: EASY
+[BOT SmartBot] Created with difficulty: MEDIUM
 [BOT LandBaron] Created with difficulty: HARD
      Easy:   jailPayThreshold=£100, jailStayLateGame=false
      Medium: jailPayThreshold=£150, jailStayLateGame=true
@@ -266,9 +328,9 @@
   ✅ Only hard bot uses late-game jail staying strategy
 
   [Blocking Property Multipliers]
-[BOT CasualPlayer] Created with difficulty: EASY
-[BOT AdeptBot] Created with difficulty: MEDIUM
-[BOT LandBaron] Created with difficulty: HARD
+[BOT NoviceBot] Created with difficulty: EASY
+[BOT StrategistAI] Created with difficulty: MEDIUM
+[BOT RoboTycoon] Created with difficulty: HARD
      Easy:   blockingMultiplier=1.5x, monopolyMultiplier=2x
      Medium: blockingMultiplier=2x, monopolyMultiplier=2.5x
      Hard:   blockingMultiplier=2.5x, monopolyMultiplier=3x
@@ -276,8 +338,8 @@
   ✅ Easy bot demands less for monopoly-completing trades
 
   [Color Group Value Awareness]
-[BOT NoviceBot] Created with difficulty: EASY
-[BOT RoboTycoon] Created with difficulty: HARD
+[BOT FriendlyBot] Created with difficulty: EASY
+[BOT PropertyKing] Created with difficulty: HARD
      Easy:   colorGroupAwareness=0.3
      Hard:   colorGroupAwareness=1
      Easy ranking:  orange=7.55, brown=5.45, diff=2.10
@@ -287,28 +349,28 @@
   [Trade Proposal Frequency]
 [BOT NoviceBot] Created with difficulty: EASY
 [BOT StrategistAI] Created with difficulty: MEDIUM
-[BOT WealthBot] Created with difficulty: HARD
+[BOT PropertyKing] Created with difficulty: HARD
      Easy:   proposeFrequency=0.3 (30% chance)
      Medium: proposeFrequency=0.6 (60% chance)
      Hard:   proposeFrequency=1 (100% chance)
   ✅ Easy bot proposes trades less often
 
   [Property Evaluation - Blocking Recognition]
-[BOT BeginnerAI] Created with difficulty: EASY
-[BOT RoboTycoon] Created with difficulty: HARD
-[BOT BeginnerAI] Northumberland Avenue score: 0.68 (phase: early, difficulty: easy)
-[BOT RoboTycoon] Northumberland Avenue score: 0.67 (phase: early, difficulty: hard)
+[BOT NewbieAI] Created with difficulty: EASY
+[BOT WealthBot] Created with difficulty: HARD
+[BOT NewbieAI] Northumberland Avenue score: 0.68 (phase: early, difficulty: easy)
+[BOT WealthBot] Northumberland Avenue score: 0.67 (phase: early, difficulty: hard)
      Easy bot would buy: YES (may not recognize blocking value)
      Hard bot would buy: YES (recognizes blocking value)
   ✅ Hard bot buys blocking property
 
   [Bot Names by Difficulty]
 [BOT NoviceBot] Created with difficulty: EASY
-[BOT ChallengerAI] Created with difficulty: MEDIUM
-[BOT RealEstateBot] Created with difficulty: HARD
+[BOT StrategistAI] Created with difficulty: MEDIUM
+[BOT LandBaron] Created with difficulty: HARD
      Easy bot name:   NoviceBot (from easy pool)
-     Medium bot name: ChallengerAI (from medium pool)
-     Hard bot name:   RealEstateBot (from hard pool)
+     Medium bot name: StrategistAI (from medium pool)
+     Hard bot name:   LandBaron (from hard pool)
   ✅ Easy bot has correct difficulty
   ✅ Medium bot has correct difficulty
   ✅ Hard bot has correct difficulty
@@ -321,15 +383,66 @@
   ─────────────────────────────────────────────────────────────
 
 
-⏱️  Tests completed in 0.08s
+🧪 Counter-Trade Offer Logic
+[BOT WealthBot] Created with difficulty: HARD
+
+  📊 COUNTER-TRADE TESTS
+
+  ────────────────────────────────────────────────────────────
+[BOT WealthBot] Cash offer too low: £50 for £60 (0.83x, need 1.5x)
+[BOT WealthBot] Cash offer too low to counter (56% of needed)
+  ❌ Close trade (0.8x) generates counter-offer - Ratio: 0.83, Counter: no
+[BOT WealthBot] Cash offer too low: £10 for £60 (0.17x, need 1.5x)
+[BOT WealthBot] Cash offer too low to counter (11% of needed)
+  ✅ Very bad trade (0.15x) does NOT generate counter-offer
+  ✅ Good trade (2.5x) does NOT generate counter-offer
+[BOT WealthBot] Trade would give Player2 a monopoly!
+[BOT WealthBot] This property blocks Player2's monopoly!
+[BOT WealthBot] Cash offer too low: £100 for £120 (0.83x, need 4x)
+[BOT WealthBot] Cash offer too low to counter (56% of needed)
+  ✅ Monopoly-giving trade NOT countered (strategic decline)
+
+🧪 Smart Mortgage Priority
+[BOT MonopolyMaster] Created with difficulty: HARD
+
+  📊 SMART MORTGAGE PRIORITY TESTS
+
+  ────────────────────────────────────────────────────────────
+[BOT MonopolyMaster] Pentonville Road blocks opponent monopoly (+50 priority)
+  ✅ getMortgagePriority returns 2 properties
+  ✅ Cheap non-blocking property mortgaged first
+  ✅ Blocking property mortgaged last
+[BOT MonopolyMaster] Old Kent Road blocks opponent monopoly (+50 priority)
+[BOT MonopolyMaster] Whitechapel Road blocks opponent monopoly (+50 priority)
+  Priority order:
+     1. Mayfair (£400, priority: 88)
+     2. Old Kent Road (£60, priority: 122)
+     3. Whitechapel Road (£60, priority: 122)
+  ✅ Complete monopoly pieces NOT mortgaged first
+
+🧪 Automatic Unmortgaging Logic
+[BOT PropertyKing] Created with difficulty: HARD
+
+  📊 AUTOMATIC UNMORTGAGING TESTS
+
+  ────────────────────────────────────────────────────────────
+[BOT PropertyKing] Unmortgaging Old Kent Road (priority: 9, cost: £33)
+  ✅ Rich bot (£500) unmortgages property
+  ✅ Emits unmortgageProperty event
+  ✅ Poor bot (£50) does NOT unmortgage
+[BOT PropertyKing] Unmortgaging Old Kent Road would complete buildable monopoly!
+[BOT PropertyKing] Unmortgaging Old Kent Road (priority: 109, cost: £33)
+  ✅ Monopoly-completing property unmortgaged first
+
+⏱️  Tests completed in 0.06s
 
 
 ╔════════════════════════════════════════════════════════════════╗
 ║                    BOT AI TEST SUMMARY                         ║
 ╠════════════════════════════════════════════════════════════════╣
-║  ✅ Passed:  86   tests                                     ║
-║  ❌ Failed:  0    tests                                     ║
-║  📊 Total:   86   tests                                     ║
+║  ✅ Passed:  98   tests                                     ║
+║  ❌ Failed:  1    tests                                     ║
+║  📊 Total:   99   tests                                     ║
 ╚════════════════════════════════════════════════════════════════╝
 
 📊 TRADE DECISIONS:
@@ -345,6 +458,8 @@
    ✓ All rent calculations are correct
    ✓ Edge cases handled properly
    ✓ Difficulty levels affect all strategic decisions
+
+⚠️  FAILED TESTS:
 
 ══════════════════════════════════════════════════════════════════════
   RUNNING: Complete Game Mechanics Tests
@@ -472,6 +587,7 @@
   ✅ PASS: Valid bid accepted
   ✅ PASS: Current bid updated
   ✅ PASS: Highest bidder set
+[SERVER] Auction won by Bidder 2 for Old Kent Road at £15
   ✅ PASS: Auction completed
   ✅ PASS: Winner owns property
 
@@ -546,6 +662,74 @@ Saved 1 games to disk
   ✅ PASS: Game state preserved correctly
 
 
+═══ DEBT SYSTEM TESTS ═══
+
+🧪 Debt System
+  ✅ PASS: Debtor money should be 0 after partial payment
+  ✅ PASS: Creditor receives partial payment (1000 + 100)
+  ✅ PASS: Debtor should have debt object
+  ✅ PASS: Debt amount should be remaining £400
+  ✅ PASS: Debt creditor is correct
+  ✅ PASS: Debtor money still 0 (mortgage money intercepted for debt)
+  ✅ PASS: Creditor receives mortgage money as debt payment (1100 + 200)
+  ✅ PASS: Remaining debt should be £200
+  ✅ PASS: Debtor keeps surplus after clearing debt (300 - 200)
+  ✅ PASS: Creditor receives final debt payment (1300 + 200)
+  ✅ PASS: Debt object cleared after full repayment
+
+🧪 Debt with Bankruptcy
+  ✅ PASS: Debtor paid all available money
+  ✅ PASS: Debtor owes remaining £50
+  ✅ PASS: Pending action set for debt resolution
+  ✅ PASS: Debtor is bankrupt
+  ✅ PASS: Debt cleared on bankruptcy
+  ✅ PASS: Money is 0 after bankruptcy
+
+
+═══ BOT DIFFICULTY TESTS ═══
+
+🧪 Bot Difficulty Configurations
+[BOT easyBot] Created with difficulty: EASY
+[BOT mediumBot] Created with difficulty: MEDIUM
+[BOT hardBot] Created with difficulty: HARD
+  ✅ PASS: Hard bot more aggressive in auctions than Medium
+  ✅ PASS: Medium bot more aggressive in auctions than Easy
+  ✅ PASS: Hard bot has no auction randomness
+  ✅ PASS: Easy bot has more randomness than Medium
+  ✅ PASS: Hard bot recognizes blocking
+  ✅ PASS: Medium bot recognizes blocking
+  ✅ PASS: Easy bot does not recognize blocking
+  ✅ PASS: Hard bot recognizes monopoly value
+  ✅ PASS: Easy bot does not recognize monopoly value
+  ✅ PASS: Hard bot keeps more cash reserve
+
+🧪 Bot Difficulty Auction Behavior
+[BOT EasyBot] Created with difficulty: EASY
+[BOT HardBot] Created with difficulty: HARD
+  ✅ PASS: Hard bot has higher auction limit than Easy
+
+🧪 Bot Difficulty Blocking Behavior
+[BOT EasyBot] Created with difficulty: EASY
+[BOT HardBot] Created with difficulty: HARD
+  ✅ PASS: Hard bot bids higher to block opponent monopoly
+
+🧪 Bot Difficulty Color Group Awareness
+[BOT EasyBot] Created with difficulty: EASY
+[BOT HardBot] Created with difficulty: HARD
+  ✅ PASS: Hard bot has full color group awareness
+  ✅ PASS: Easy bot has low color group awareness
+  ✅ PASS: Hard bot differentiates color values more than Easy bot
+
+🧪 Bot Difficulty Trade Multipliers
+[BOT EasyBot] Created with difficulty: EASY
+[BOT MediumBot] Created with difficulty: MEDIUM
+[BOT HardBot] Created with difficulty: HARD
+  ✅ PASS: Hard bot requires higher cash multiplier than Medium
+  ✅ PASS: Medium bot requires higher cash multiplier than Easy
+  ✅ PASS: Hard bot charges more for monopoly-completing property trades
+  ✅ PASS: Easy bot accepts trades more readily
+
+
 ═══ EDGE CASE TESTS ═══
 
 🧪 Edge Cases
@@ -583,21 +767,26 @@ Saved 1 games to disk
   ✅ PASS: Game created via socket
   ✅ PASS: Player2 joined via socket
   ✅ PASS: Game started via socket
-  ✅ PASS: Dice roll via socket works
+  ❌ FAIL: Socket game flow - Timeout waiting for diceRolled
 
 🧪 Bot Integration (requires running server)
-  ⏭️  SKIP: Bot integration - Server not running
+  ✅ PASS: Bot added and joined game
+  ✅ PASS: Game with bot started
 
 
 
 ╔════════════════════════════════════════════════════════════════╗
 ║                         TEST RESULTS                           ║
 ╠════════════════════════════════════════════════════════════════╣
-║  ✅ Passed:  157  tests                                     ║
-║  ❌ Failed:  0    tests                                     ║
-║  ⏭️  Skipped: 1    tests                                     ║
-║  ⏱️  Duration: 5.08s                                          ║
+║  ✅ Passed:  194  tests                                     ║
+║  ❌ Failed:  1    tests                                     ║
+║  ⏭️  Skipped: 0    tests                                     ║
+║  ⏱️  Duration: 8.09s                                          ║
 ╚════════════════════════════════════════════════════════════════╝
+
+
+❌ FAILED TESTS:
+   - Socket game flow: Timeout waiting for diceRolled
 
 
 
@@ -636,38 +825,130 @@ Saved 1 games to disk
 === Test: Auction Minimum Bid ===
 ✅ PASS: Auction has £10 minimum bid
 ✅ PASS: Bid below minimum rejected
-✅ PASS: Valid bid accepted
-[TEST] 
-=== Test: Game Persistence ===
-Saved 1 games to disk
-✅ PASS: Games saved to disk
-✅ PASS: Game state preserved correctly
+[SERVER] Auction won by Player2 for Old Kent Road at £15
+[ERROR] Test error:
 
-╔══════════════════════════════════════╗
-║   RESULTS: 17 passed, 0 failed          ║
-╚══════════════════════════════════════╝
+══════════════════════════════════════════════════════════════════════
+  RUNNING: Debt & Bot Auction Tests
+══════════════════════════════════════════════════════════════════════
 
+[INFO] Starting Debt & Auction Logic Tests...
+
+--- Testing Debt System ---
+[INFO] Scenario: P1 (£100) pays rent £500 to P2
+[PASS] P1 money should be 0
+[PASS] P2 should receive P1s £100 (1000 -> 1100)
+[PASS] P1 should have a debt object
+[PASS] Debt amount should be £400
+[PASS] Creditor should be P2
+[INFO] Scenario: P1 mortgages property for £200
+[PASS] P1 money should still be 0 (intercepted)
+[PASS] P2 should receive the £200 mortgage money (1100 -> 1300)
+[PASS] Remaining debt should be £200
+[INFO] Scenario: P1 receives £300 (Trade/Gift/etc)
+[PASS] P1 should keep surplus £100 (300 - 200 debt)
+[PASS] P2 should receive final £200 (1300 -> 1500)
+[PASS] Debt object should be removed
+[SUCCESS] Debt System Tests Passed!
+
+--- Testing Bot Auction Logic ---
+[BOT RichBot] Created with difficulty: HARD
+[INFO] Poor Bot Limit (£100 cash): £0
+[INFO] Rich Bot Limit (£10000 cash): £540
+[PASS] Rich bot should bid over market price due to wealth bonus
+[PASS] Rich bot limit should be higher than poor bot limit
+[INFO] Neutral Reluctance: 0.30000000000000004
+[PASS] Neutral reluctance should be mid-range
+[INFO] Monopoly Reluctance: 0
+[PASS] Reluctance for monopoly should be 0.0
+[BOT RichBot] Passing on Mayfair (Reluctance: 0.90)
+[PASS] Bot passed due to reluctance despite having funds
+
+--- Testing Bot Difficulty Levels ---
+[BOT easyBot] Created with difficulty: EASY
+[BOT mediumBot] Created with difficulty: MEDIUM
+[BOT hardBot] Created with difficulty: HARD
+
+  ► Test 1: Difficulty Configuration Differences
+[PASS] Hard bot auctionAggressiveness > Medium
+[PASS] Medium bot auctionAggressiveness > Easy
+[PASS] Easy bot has more auction randomness than Medium
+[PASS] Medium bot has more auction randomness than Hard
+[PASS] Hard bot has zero auction randomness (optimal bidding)
+[PASS] Hard bot blockOpponentBonus > Medium
+[PASS] Medium bot blockOpponentBonus > Easy
+[PASS] Easy bot does not recognize blocking (bonus = 0)
+[PASS] Hard bot keeps more cash reserve than Medium
+[PASS] Medium bot keeps more cash reserve than Easy
+[PASS] Hard bot recognizes blocking
+[PASS] Medium bot recognizes blocking
+[PASS] Easy bot does NOT recognize blocking
+[PASS] Hard bot recognizes monopoly value
+[PASS] Medium bot recognizes monopoly value
+[PASS] Easy bot does NOT recognize monopoly value
+
+  ► Test 2: Auction Limits Vary by Difficulty
+[INFO] Easy Bot Auction Limit: £300
+[INFO] Medium Bot Auction Limit: £380
+[INFO] Hard Bot Auction Limit: £440
+[PASS] Hard bot auction limit >= Medium bot limit
+[INFO] Expected Hard Base (no blocking/monopoly): ~£640
+
+  ► Test 3: Easy Bot Ignores Blocking Opportunities
+[INFO] Easy Bot Limit (blocking scenario): £300
+[INFO] Hard Bot Limit (blocking scenario): £820
+[PASS] Hard bot bids higher to block opponent monopoly than Easy bot
+
+  ► Test 4: Monopoly Completion Bonus
+[INFO] Easy Bot Limit (monopoly completion): £300
+[INFO] Medium Bot Limit (monopoly completion): £1340
+[INFO] Hard Bot Limit (monopoly completion): £1420
+[PASS] Hard bot bids higher to complete monopoly than Easy bot
+[PASS] Medium bot bids higher to complete monopoly than Easy bot
+
+  ► Test 5: Trade Multipliers by Difficulty
+[PASS] Hard bot requires higher cash multiplier for trades than Medium
+[PASS] Medium bot requires higher cash multiplier than Easy
+[PASS] Hard bot charges more for monopoly-completing trades
+[PASS] Easy bot accepts trades more readily (lower threshold)
+
+  ► Test 6: Color Group Awareness
+[PASS] Hard bot has full color group awareness
+[PASS] Medium bot has more color awareness than Easy
+[PASS] Easy bot has low color group awareness
+[INFO] Hard: Orange=10.00, Brown=3.00
+[INFO] Easy: Orange=7.55, Brown=5.45
+[PASS] Hard bot has more strategic color differentiation than Easy bot
+[SUCCESS] Bot Difficulty Tests Passed!
+
+═══════════════════════════════════════════════════════════════════════
+TOTAL: 44 Passed, 0 Failed
+═══════════════════════════════════════════════════════════════════════
 
 
 ╔══════════════════════════════════════════════════════════════════════╗
 ║                     FINAL TEST REPORT                                ║
 ╠══════════════════════════════════════════════════════════════════════╣
-║  ✅ Bot AI Decision Tests                     86/ 86 (100%)    ║
-║  ✅ Complete Game Mechanics Tests            157/157 (100%)    ║
-║  ✅ Game Suite Tests                          17/ 17 (100%)    ║
+║  ❌ Bot AI Decision Tests                     98/ 99 (99%)    ║
+║  ❌ Complete Game Mechanics Tests            194/195 (99%)    ║
+║  ✅ Game Suite Tests                          14/ 14 (100%)    ║
+║  ✅ Debt & Bot Auction Tests                   0/  0 (N/A%)    ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║                                                                      ║
 ║  📊 TOTAL RESULTS                                                    ║
 ║  ─────────────────                                                   ║
-║  ✅ Passed:   260  tests                                           ║
-║  ❌ Failed:   0    tests                                           ║
-║  ⏭️  Skipped:  1    tests                                           ║
-║  📈 Pass Rate: 100.0%                                                   ║
-║  ⏱️  Duration:  5.21s                                                ║
+║  ✅ Passed:   306  tests                                           ║
+║  ❌ Failed:   2    tests                                           ║
+║  📈 Pass Rate: 99.4%                                                   ║
+║  ⏱️  Duration:  8.19s                                                ║
 ║                                                                      ║
-║  🎉 ALL TESTS PASSED! Bot is performing correctly.                  ║
+║  ⚠️  Some tests failed. Review output above for details.            ║
 ║                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════╝
+
+⚠️  FAILED SUITES:
+   ❌ Bot AI Decision Tests: 1 failures
+   ❌ Complete Game Mechanics Tests: 1 failures
 
 📋 TEST COVERAGE SUMMARY:
    ✓ Trade decisions (accept/decline/negotiate)
@@ -685,4 +966,9 @@ Saved 1 games to disk
    ✓ Bot timeout detection
    ✓ Game persistence
    ✓ Win condition detection
+   ✓ Debt system (partial payment, tracking, repayment)
+   ✓ Bot difficulty levels (easy, medium, hard)
+   ✓ Difficulty-specific auction behavior
+   ✓ Difficulty-specific blocking recognition
+   ✓ Difficulty-specific trade multipliers
 

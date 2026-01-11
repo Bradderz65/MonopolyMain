@@ -5117,11 +5117,46 @@
 
 @media (max-width: 600px) {
   .rent-amount {
-    font-size: 0.65rem;
+    font-size: 1.4rem; /* Significantly larger for visibility */
+    text-shadow: 0 0 5px rgba(0,0,0,0.8);
   }
 
   .rent-coins .coin {
-    font-size: 0.35rem;
+    font-size: 0.9rem;
+  }
+
+  /* Enhanced rent popup on mobile - kept on property but styled for visibility */
+  .rent-popup-on-board {
+    /* Removed absolute centering to allow grid placement (on property) */
+    width: auto;
+    height: auto;
+    z-index: 200 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Ensure it doesn't get clipped if near edge */
+    overflow: visible;
+  }
+
+  .rent-float {
+    /* Removed background/border as requested */
+    min-width: 160px;
+    /* Scale it up slightly to ensure visibility */
+    transform: scale(1.1);
+  }
+
+  /* Make event toasts larger on mobile */
+  .event-toast {
+    min-width: 280px;
+    padding: 16px 20px;
+  }
+
+  .event-toast-title {
+    font-size: 1.1rem;
+  }
+
+  .event-toast-message {
+    font-size: 1rem;
   }
 }
 

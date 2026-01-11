@@ -264,8 +264,8 @@ function Board({ board, players, onSpaceClick, animatingPlayer, followMode, foll
     }
 
     const gridPos = getGridPosition(eventToast.position);
-    // Extract just the amount from the message
-    const amount = eventToast.message?.match(/£(\d+)/)?.[0] || eventToast.message;
+    // Use the explicit amount if available, otherwise fallback
+    const amountStr = eventToast.amount ? `£${eventToast.amount}` : (eventToast.message?.match(/£(\d+)/)?.[0] || eventToast.message);
 
     return (
       <div
@@ -273,10 +273,28 @@ function Board({ board, players, onSpaceClick, animatingPlayer, followMode, foll
         style={{
           gridColumn: gridPos.gridColumn,
           gridRow: gridPos.gridRow,
+          zIndex: 100 // Ensure it's on top
         }}
       >
         <div className="rent-float">
-          <span className="rent-amount">{amount}</span>
+           {eventToast.fromName && eventToast.toName && (
+             <div className="rent-players" style={{ 
+               fontSize: 'clamp(0.9rem, 1.5vw, 1.1rem)', 
+               fontWeight: 'bold', 
+               marginBottom: '4px',
+               display: 'flex',
+               alignItems: 'center',
+               justifyContent: 'center',
+               gap: '4px',
+               whiteSpace: 'nowrap',
+               textShadow: '0 0 4px rgba(0,0,0,0.8), 0 1px 2px rgba(0,0,0,1)'
+             }}>
+               <span style={{color: eventToast.fromColor}}>{eventToast.fromName}</span>
+               <span className="rent-arrow" style={{color: 'white', fontSize: '0.8em'}}>➜</span>
+               <span style={{color: eventToast.toColor}}>{eventToast.toName}</span>
+             </div>
+           )}
+          <span className="rent-amount">{amountStr}</span>
           <div className="rent-coins">
             <span className="coin">●</span>
             <span className="coin">●</span>

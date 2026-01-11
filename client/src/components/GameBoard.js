@@ -480,7 +480,16 @@ function GameBoard({
       {eventToast && eventToast.type !== 'rent' && (
         <div className={`event-toast ${eventToast.type}`}>
           <div className="event-toast-title">{eventToast.title}</div>
-          <div className="event-toast-message">{eventToast.message}</div>
+          {eventToast.type === 'tax' && eventToast.fromName ? (
+             <div className="event-toast-message">
+                <div>
+                  <span style={{color: eventToast.fromColor, fontWeight: 'bold'}}>{eventToast.fromName}</span> paid £{eventToast.amount}
+                </div>
+                {eventToast.taxName && <div style={{fontSize: '0.85em', opacity: 0.8, marginTop: '2px'}}>({eventToast.taxName})</div>}
+             </div>
+          ) : (
+             <div className="event-toast-message">{eventToast.message}</div>
+          )}
         </div>
       )}
 

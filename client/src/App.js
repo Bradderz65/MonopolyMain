@@ -269,7 +269,18 @@ function App() {
 
       if (result.action === 'paidRent') {
         sounds.payRent();
-        setEventToast({ type: 'rent', title: 'Rent Paid!', message: `Paid £${result.rent} rent`, position: result.position });
+        const payer = game.players[game.currentPlayerIndex];
+        setEventToast({ 
+          type: 'rent', 
+          title: 'Rent Paid!', 
+          message: `Paid £${result.rent} rent`, 
+          position: result.position,
+          amount: result.rent,
+          fromName: payer.name,
+          fromColor: payer.color,
+          toName: result.ownerName,
+          toColor: result.ownerColor
+        });
         setTimeout(() => setEventToast(null), 3000);
       } else if (result.action === 'noRentJail') {
         setEventToast({
@@ -280,7 +291,16 @@ function App() {
         setTimeout(() => setEventToast(null), 3000);
       } else if (result.action === 'paidTax') {
         sounds.payMoney();
-        setEventToast({ type: 'tax', title: 'Tax Paid!', message: `Paid £${result.amount}` });
+        const payer = game.players[game.currentPlayerIndex];
+        setEventToast({ 
+          type: 'tax', 
+          title: 'Tax Paid!', 
+          message: `Paid £${result.amount}`,
+          amount: result.amount,
+          fromName: payer.name,
+          fromColor: payer.color,
+          taxName: result.space ? result.space.name : 'Tax'
+        });
         setTimeout(() => setEventToast(null), 3000);
       } else if (result.action === 'goToJail') {
         sounds.jail();

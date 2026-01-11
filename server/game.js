@@ -377,6 +377,9 @@ class Game {
             result.action = 'paidRent';
             result.rent = rent;
             result.position = player.position;
+            result.ownerId = owner.id;
+            result.ownerName = owner.name;
+            result.ownerColor = owner.color;
           }
         } else if (space.owner === player.id) {
           console.log(`[LANDING DEBUG] ${space.name} is owned by the player who landed - no rent`);

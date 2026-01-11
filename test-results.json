@@ -1,32 +1,40 @@
 {
-  "timestamp": "2025-12-29T04:42:37.269Z",
+  "timestamp": "2026-01-11T01:23:40.921Z",
   "suites": [
     {
       "name": "Bot AI Decision Tests",
-      "passed": 86,
-      "failed": 0,
-      "total": 86,
-      "duration": 102
+      "passed": 98,
+      "failed": 1,
+      "total": 99,
+      "duration": 72
     },
     {
       "name": "Complete Game Mechanics Tests",
-      "passed": 157,
-      "failed": 0,
-      "skipped": 1,
-      "duration": 5084
+      "passed": 194,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 8095
     },
     {
       "name": "Game Suite Tests",
-      "passed": 17,
+      "passed": 14,
       "failed": 0,
       "skipped": 0,
+      "duration": 6
+    },
+    {
+      "name": "Debt & Bot Auction Tests",
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "note": "Module executed on import",
       "duration": 4
     }
   ],
   "summary": {
-    "totalPassed": 260,
-    "totalFailed": 0,
-    "totalSkipped": 1,
-    "duration": 5210
+    "totalPassed": 306,
+    "totalFailed": 2,
+    "totalSkipped": 0,
+    "duration": 8192
   }
 }
