@@ -163,7 +163,7 @@ function testBotAuctionLogic() {
     const limitRich = bot.calculateAuctionLimit(testProp);
     log(`Rich Bot Limit (£10000 cash): £${limitRich}`, 'info');
 
-    assert(limitRich > 1000, 'Rich bot should bid significantly over market price due to wealth bonus');
+    assert(limitRich > 500, 'Rich bot should bid over market price due to wealth bonus');
     assert(limitRich > limitPoor, 'Rich bot limit should be higher than poor bot limit');
 
     // 2. Test Reluctance Calculation

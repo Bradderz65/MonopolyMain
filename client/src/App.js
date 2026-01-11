@@ -236,10 +236,19 @@ function App() {
 
     const processLandingResult = (result, game) => {
       console.log('[CLIENT] Processing landing result:', result);
+      const latestState = gameStateRef.current;
+
+      // Skip stale landing results using server-provided stateVersion
+      // This prevents queued landing results from overwriting newer state (e.g., propertyBought)
+      if (latestState?.stateVersion && game?.stateVersion && latestState.stateVersion > game.stateVersion) {
+        console.log(`[CLIENT] Skipping stale landing result (stateVersion ${game.stateVersion} < current ${latestState.stateVersion})`);
+        return;
+      }
+
       setGameState(prev => {
-        // Prevent stale state from overwriting newer state (e.g. if turn ended during animation)
-        if (prev && prev.currentPlayerIndex !== game.currentPlayerIndex) {
-          console.log('[CLIENT] Skipping stale state update from landing result');
+        // Double-check stateVersion inside setState for race conditions
+        if (prev?.stateVersion && game?.stateVersion && prev.stateVersion > game.stateVersion) {
+          console.log(`[CLIENT] Skipping stale state update from landing result (stateVersion ${game.stateVersion} < prev ${prev.stateVersion})`);
           return prev;
         }
 
@@ -256,6 +265,7 @@ function App() {
 
         return { ...game, trades: latestTrades };
       });
+
 
       if (result.action === 'paidRent') {
         sounds.payRent();

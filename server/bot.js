@@ -434,8 +434,9 @@ class MonopolyBot {
 
         this.socket.on('houseSold', ({ game }) => {
             this.updateGameState(game);
-            if (this.gameState.pendingAction?.type === 'mustRaiseFunds' ||
-                this.gameState.pendingAction?.type === 'mustPayOrBankrupt') {
+            // Only handle bankruptcy continuation if it's our turn
+            if (this.isMyTurn && (this.gameState.pendingAction?.type === 'mustRaiseFunds' ||
+                this.gameState.pendingAction?.type === 'mustPayOrBankrupt')) {
                 const delay = this.getRandomDelay('sellAsset');
                 setTimeout(() => this.handleBankruptcyState(this.gameState.pendingAction), delay);
             }
@@ -443,8 +444,9 @@ class MonopolyBot {
 
         this.socket.on('propertyMortgaged', ({ game }) => {
             this.updateGameState(game);
-            if (this.gameState.pendingAction?.type === 'mustRaiseFunds' ||
-                this.gameState.pendingAction?.type === 'mustPayOrBankrupt') {
+            // Only handle bankruptcy continuation if it's our turn
+            if (this.isMyTurn && (this.gameState.pendingAction?.type === 'mustRaiseFunds' ||
+                this.gameState.pendingAction?.type === 'mustPayOrBankrupt')) {
                 const delay = this.getRandomDelay('sellAsset');
                 setTimeout(() => this.handleBankruptcyState(this.gameState.pendingAction), delay);
             } else if (this.isMyTurn && !this.gameState.pendingAction) {
@@ -1613,6 +1615,7 @@ class MonopolyBot {
 
         if (!auction || !this.myPlayer) return;
         if (auction.passedPlayers?.includes(this.myPlayer.id)) return;
+        if (this.myPlayer.inJail) return; // Cannot bid while in jail
 
         // Don't bid if we're already the highest bidder - wait for others to act
         if (auction.highestBidder === this.myPlayer.id) {

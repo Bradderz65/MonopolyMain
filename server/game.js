@@ -56,6 +56,13 @@ class Game {
     this.hotelsAvailable = 12;
     this.turnStartTime = Date.now();
     this.lastActionTime = Date.now();
+    this.stateVersion = 0; // Increments on every state change for stale update detection
+  }
+
+  // Increment state version - call this on every action that modifies game state
+  incrementStateVersion() {
+    this.stateVersion++;
+    return this.stateVersion;
   }
 
   shuffleArray(array) {
@@ -322,6 +329,8 @@ class Game {
     if (player.position < oldPosition && spaces > 0) {
       player.money += 200;
       this.addLog(`${player.name} passed GO and collected £200`);
+      this.processDebtPayment(player);
+      this.checkBankruptcy(player);
     }
   }
 
@@ -329,6 +338,8 @@ class Game {
     if (collectGo && position < player.position && position !== 10) {
       player.money += 200;
       this.addLog(`${player.name} passed GO and collected £200`);
+      this.processDebtPayment(player);
+      this.checkBankruptcy(player);
     }
     player.position = position;
   }
@@ -391,6 +402,7 @@ class Game {
         if (this.freeParking > 0) {
           player.money += this.freeParking;
           this.addLog(`${player.name} collected £${this.freeParking} from Free Parking`);
+          this.processDebtPayment(player);
           result.action = 'freeParking';
           result.amount = this.freeParking;
           this.freeParking = 0;
@@ -456,6 +468,8 @@ class Game {
       player.money -= rent;
       owner.money += rent;
       this.addLog(`${player.name} paid £${rent} rent to ${owner.name}`);
+      this.processDebtPayment(owner);
+      this.checkBankruptcy(owner);
     } else {
       // Insufficient funds - partial payment
       const available = Math.max(0, player.money);
@@ -463,6 +477,8 @@ class Game {
 
       player.money = 0;
       owner.money += available;
+      this.processDebtPayment(owner);
+      this.checkBankruptcy(owner);
 
       // Create debt record
       player.debt = { amount: owed, creditor: owner.id };
@@ -519,6 +535,7 @@ class Game {
         player.money += card.amount;
         if (card.amount > 0) {
           this.addLog(`${player.name} received £${card.amount}`);
+          this.processDebtPayment(player);
         } else {
           this.addLog(`${player.name} paid £${Math.abs(card.amount)}`);
           this.freeParking += Math.abs(card.amount);
@@ -532,6 +549,7 @@ class Game {
           player.money += card.amount;
         });
         this.addLog(`${player.name} collected £${card.amount} from each player`);
+        this.processDebtPayment(player);
         break;
 
       case 'jail':
@@ -652,8 +670,8 @@ class Game {
     const property = this.pendingAction.property;
     const currentPlayerId = this.players[this.currentPlayerIndex].id;
 
-    // All non-bankrupt players can participate
-    const allParticipants = this.players.filter(p => !p.bankrupt).map(p => p.id);
+    // All non-bankrupt, non-jailed players can participate
+    const allParticipants = this.players.filter(p => !p.bankrupt && !p.inJail).map(p => p.id);
 
     this.auction = {
       property: property,
@@ -676,6 +694,9 @@ class Game {
     if (!this.auction.participants.includes(player.id)) return { success: false };
     if (this.auction.passedPlayers.includes(player.id)) {
       return { success: false, message: 'Player already passed' };
+    }
+    if (player.inJail) {
+      return { success: false, message: 'Cannot bid while in jail' };
     }
 
     const now = Date.now();
@@ -915,10 +936,14 @@ class Game {
     if (trade.offer.money) {
       fromPlayer.money -= trade.offer.money;
       toPlayer.money += trade.offer.money;
+      this.processDebtPayment(toPlayer);
+      this.checkBankruptcy(toPlayer);
     }
     if (trade.request.money) {
       toPlayer.money -= trade.request.money;
       fromPlayer.money += trade.request.money;
+      this.processDebtPayment(fromPlayer);
+      this.checkBankruptcy(fromPlayer);
     }
 
     if (trade.offer.properties) {
@@ -975,6 +1000,11 @@ class Game {
   }
 
   checkBankruptcy(player) {
+    // Auto-pay debt if we have money (Catch-all for edge cases)
+    if (player.debt && player.money > 0) {
+      this.processDebtPayment(player);
+    }
+
     const debtAmount = player.debt ? player.debt.amount : (player.money < 0 ? Math.abs(player.money) : 0);
 
     if (debtAmount > 0) {
@@ -1101,6 +1131,7 @@ class Game {
 
   addLog(message) {
     this.lastActionTime = Date.now(); // Reset timeout timer on any activity
+    this.incrementStateVersion(); // Track state changes for stale update detection
     this.gameLog.push({
       time: new Date().toISOString(),
       message: message
@@ -1132,6 +1163,7 @@ class Game {
       auction: this.auction,
       trades: this.trades.filter(t => t.status === 'pending'),
       gameLog: this.gameLog.slice(-20),
+      stateVersion: this.stateVersion,
       freeParking: this.freeParking,
       housesAvailable: this.housesAvailable,
       hotelsAvailable: this.hotelsAvailable
