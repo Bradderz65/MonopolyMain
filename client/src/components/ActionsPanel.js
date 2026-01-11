@@ -27,10 +27,13 @@ function ActionsPanel({
   const [currentTradeIndex, setCurrentTradeIndex] = useState(0);
   const [rollPending, setRollPending] = useState(false);
   const [forceDiceAnimation, setForceDiceAnimation] = useState(false);
+  const [autoEndTurn, setAutoEndTurn] = useState(() => localStorage.getItem('monopoly_autoEndTurn') === 'true');
+  const [autoEndTimer, setAutoEndTimer] = useState(null);
   const lastRollRef = useRef(gameState.lastDiceRoll);
 
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-  const canEndTurn = isMyTurn && gameState.diceRolled && !gameState.canRollAgain && !gameState.pendingAction && !gameState.auction;
+  // Ensure we can't end turn while animating
+  const canEndTurn = isMyTurn && gameState.diceRolled && !gameState.canRollAgain && !gameState.pendingAction && !gameState.auction && !animatingPlayer;
 
   // Determine if roll button should be enabled
   const canRollDice = isMyTurn && !canEndTurn && (
@@ -41,6 +44,80 @@ function ActionsPanel({
 
   const isRollLocked = rollPending || !!animatingPlayer;
 
+  const toggleAutoEndTurn = () => {
+    const newValue = !autoEndTurn;
+    setAutoEndTurn(newValue);
+    localStorage.setItem('monopoly_autoEndTurn', newValue);
+  };
+
+  // Helper to check for buildable properties
+  const canBuildHouses = () => {
+    if (!myPlayer || !gameState.board) return false;
+    
+    // Group properties by color
+    const propertiesByColor = {};
+    gameState.board.forEach((space, index) => {
+      if (space.type === 'property' && space.color) {
+        if (!propertiesByColor[space.color]) propertiesByColor[space.color] = [];
+        propertiesByColor[space.color].push({ ...space, index });
+      }
+    });
+
+    // Check each color group
+    for (const color in propertiesByColor) {
+      const group = propertiesByColor[color];
+      const ownsAll = group.every(p => p.owner === myPlayer.id);
+      
+      if (ownsAll) {
+        // Check if any property in group can handle a house (simplified check for potential)
+        const minHouses = Math.min(...group.map(p => p.houses || 0));
+        // Also check if any property is mortgaged (cannot build if any in group is mortgaged)
+        const anyMortgaged = group.some(p => p.mortgaged);
+        
+        if (!anyMortgaged && minHouses < 5) {
+           // Check affordability
+           const cost = group[0].houseCost;
+           if (myPlayer.money >= cost) return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  // Effect for Auto End Turn logic
+  useEffect(() => {
+    let timerId;
+    
+    if (canEndTurn && autoEndTurn) {
+      // If player has potential to build houses, don't auto-end
+      if (canBuildHouses()) {
+        setAutoEndTimer(null); // Ensure timer is cleared if state changes to buildable
+        return; 
+      }
+
+      // Start countdown
+      let count = 3;
+      setAutoEndTimer(count);
+      timerId = setInterval(() => {
+        count--;
+        if (count <= 0) {
+          clearInterval(timerId);
+          setAutoEndTimer(null);
+          // Only auto-end if still valid
+          endTurn();
+        } else {
+          setAutoEndTimer(count);
+        }
+      }, 1000);
+    } else {
+      setAutoEndTimer(null);
+    }
+
+    return () => {
+      if (timerId) clearInterval(timerId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canEndTurn, autoEndTurn, gameState.stateVersion]); // monitoring stateVersion to retry check after actions
 
   const handleBid = () => {
     const amount = parseInt(bidAmount);
@@ -117,7 +194,7 @@ function ActionsPanel({
         <div className="main-action">
           {canEndTurn ? (
             <button className="btn-action-main end-turn" onClick={endTurn}>
-              ✓ End Turn
+              {autoEndTimer ? `✓ End Turn (${autoEndTimer}s)` : '✓ End Turn'}
             </button>
           ) : canRollDice ? (
             <button
@@ -317,6 +394,13 @@ function ActionsPanel({
 
       {/* Quick Actions Bar */}
       <div className="quick-actions">
+        <button
+          className={`btn-quick-action ${autoEndTurn ? 'active' : ''}`}
+          onClick={toggleAutoEndTurn}
+          title="Automatically end turn when no actions remain (paused if you can build houses)"
+        >
+          {autoEndTurn ? '⚡ Auto End' : '⚡ Auto End'}
+        </button>
         <button
           className={`btn-quick-action ${showTrade ? 'active' : ''}`}
           onClick={() => setShowTrade(!showTrade)}
