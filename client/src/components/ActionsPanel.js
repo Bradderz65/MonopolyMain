@@ -70,7 +70,7 @@ function ActionsPanel({
       // Also clear pending state if it was a roll
       setRollPending(false);
     }
-    
+
     // Safety clear for turn change
     if (!isMyTurn) {
       setRollPending(false);
@@ -79,7 +79,13 @@ function ActionsPanel({
 
   // Determine what to show based on game state
   const hasPendingTrades = gameState.trades?.filter(t => t.to === myPlayer?.id).length > 0;
-  const showBankruptcy = myPlayer?.money < 0;
+  // Show bankruptcy option when player has debt or negative money
+  const hasDebt = myPlayer?.debt && myPlayer.debt.amount > 0;
+  const hasNegativeMoney = myPlayer?.money < 0;
+  const hasAssetsToSell = myPlayer?.properties?.length > 0 ||
+    gameState?.board?.some(space => space.owner === myPlayer?.id && space.houses > 0);
+  const showBankruptcy = hasDebt || hasNegativeMoney;
+  const mustDeclareBankruptcy = showBankruptcy && !hasAssetsToSell;
   const showPropertyPurchase = gameState.pendingAction?.type === 'buyOrAuction' && isMyTurn;
   const showAuction = !!gameState.auction;
   const showJail = myPlayer?.inJail && isMyTurn && !gameState.diceRolled;
@@ -281,13 +287,30 @@ function ActionsPanel({
 
       {/* Bankruptcy Warning */}
       {showBankruptcy && (
-        <div className="action-section bankruptcy">
+        <div className={`action-section bankruptcy ${mustDeclareBankruptcy ? 'urgent' : ''}`}>
           <div className="section-header">⚠️ In Debt</div>
           <div className="section-content">
-            <p>You owe £{Math.abs(myPlayer?.money || 0)}. Sell assets or declare bankruptcy.</p>
-            <button className="btn-action bankrupt" onClick={declareBankruptcy}>
-              Declare Bankruptcy
-            </button>
+            <p>
+              {hasDebt
+                ? `You owe £${myPlayer.debt.amount.toLocaleString()} to another player.`
+                : `You owe £${Math.abs(myPlayer?.money || 0).toLocaleString()}.`
+              }
+            </p>
+            {mustDeclareBankruptcy ? (
+              <>
+                <p className="bankruptcy-urgent">You have no assets to sell. You must declare bankruptcy.</p>
+                <button className="btn-action bankrupt urgent" onClick={declareBankruptcy}>
+                  💀 Declare Bankruptcy
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="bankruptcy-hint">Sell houses or mortgage properties to raise funds.</p>
+                <button className="btn-action bankrupt" onClick={declareBankruptcy}>
+                  Declare Bankruptcy
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

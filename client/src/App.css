@@ -2869,6 +2869,52 @@
   color: #e74c3c;
 }
 
+.action-section.bankruptcy.urgent {
+  border-color: rgba(231, 76, 60, 0.8);
+  background: rgba(231, 76, 60, 0.15);
+  animation: urgentPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes urgentPulse {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(231, 76, 60, 0.5);
+  }
+}
+
+.action-section.bankruptcy.urgent .section-header {
+  background: rgba(231, 76, 60, 0.35);
+}
+
+.bankruptcy-urgent {
+  color: #e74c3c;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.bankruptcy-hint {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.btn-action.bankrupt.urgent {
+  background: rgba(231, 76, 60, 0.4);
+  animation: urgentButtonPulse 1s ease-in-out infinite;
+}
+
+@keyframes urgentButtonPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
 /* Quick Actions Bar */
 .quick-actions {
   display: flex;

@@ -348,6 +348,7 @@ class Game {
     const player = this.players[this.currentPlayerIndex];
     const space = this.board[player.position];
 
+    console.log(`[LANDING DEBUG] ${player.name} landed on ${space.name} (position ${player.position}, type: ${space.type})`);
     this.addLog(`${player.name} landed on ${space.name}`);
 
     let result = { type: 'landed', space: space };
@@ -357,11 +358,13 @@ class Game {
       case 'railroad':
       case 'utility':
         if (space.owner === null) {
+          console.log(`[LANDING DEBUG] ${space.name} is unowned - prompting buy/auction`);
           this.pendingAction = { type: 'buyOrAuction', property: space };
           result.action = 'buyOrAuction';
           result.price = space.price;
         } else if (space.owner !== player.id && !space.mortgaged) {
           const owner = this.players.find(p => p.id === space.owner);
+          console.log(`[LANDING DEBUG] ${space.name} owned by ${owner?.name || 'unknown'}, mortgaged: ${space.mortgaged}, owner in jail: ${owner?.inJail}`);
           if (owner && owner.inJail) {
             this.addLog(`${player.name} landed on ${space.name} but ${owner.name} is in jail and collects no rent`);
             result.action = 'noRentJail';
@@ -369,11 +372,16 @@ class Game {
             result.position = player.position;
           } else {
             const rent = this.calculateRent(space, player);
+            console.log(`[LANDING DEBUG] Collecting rent: £${rent} from ${player.name} to ${owner?.name}`);
             this.payRent(player, space, rent);
             result.action = 'paidRent';
             result.rent = rent;
             result.position = player.position;
           }
+        } else if (space.owner === player.id) {
+          console.log(`[LANDING DEBUG] ${space.name} is owned by the player who landed - no rent`);
+        } else if (space.mortgaged) {
+          console.log(`[LANDING DEBUG] ${space.name} is mortgaged - no rent`);
         }
         break;
 
